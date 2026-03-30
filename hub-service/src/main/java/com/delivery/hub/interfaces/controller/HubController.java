@@ -20,6 +20,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/hubs")
@@ -60,5 +62,14 @@ public class HubController {
         RestPage<HubResponse> response = hubApiService.getHubs(command, pageable);
 
         return CommonResponse.ok(response.toPage());
+    }
+
+    @GetMapping("/{hub_id}")
+    @Operation(summary = "특정 허브 검색", description = "특정 허브의 상세 정보를 받아옵니다")
+    public ResponseEntity<CommonResponse<HubResponse>> getHub(@Valid @PathVariable("hub_id") UUID hubId) {
+
+        HubResponse response = hubApiService.getHub(hubId);
+
+        return CommonResponse.ok(response);
     }
 }
