@@ -63,7 +63,9 @@ public class HubApiService {
         return HubResponse.detailFrom(hub);
     }
 
+    // 허브 내용 수정
     @CacheEvict(cacheNames = "hubPages", allEntries = true)
+    @Transactional
     public HubResponse updateHub(UUID hubId, @Valid UpdateHubRequest request) {
 
         Hub hub = hubrepository.findById(hubId)
@@ -93,6 +95,7 @@ public class HubApiService {
         return HubResponse.from(hub);
     }
 
+    // 허브 삭제
     @Transactional
     @CacheEvict(cacheNames = {"hubPages", "hubDetails"}, allEntries = true)
     public void deleteHub(UUID hubId) {
