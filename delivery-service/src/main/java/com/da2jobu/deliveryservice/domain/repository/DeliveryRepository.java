@@ -1,5 +1,7 @@
-package com.da2jobu.deliveryservice.domain.delivery;
+package com.da2jobu.deliveryservice.domain.repository;
 
+import com.da2jobu.deliveryservice.domain.entity.Delivery;
+import com.da2jobu.deliveryservice.domain.vo.DeliveryStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

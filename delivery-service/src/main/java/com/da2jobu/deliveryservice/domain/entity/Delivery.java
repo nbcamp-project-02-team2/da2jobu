@@ -1,5 +1,6 @@
-package com.da2jobu.deliveryservice.domain.delivery;
+package com.da2jobu.deliveryservice.domain.entity;
 
+import com.da2jobu.deliveryservice.domain.vo.DeliveryStatus;
 import common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

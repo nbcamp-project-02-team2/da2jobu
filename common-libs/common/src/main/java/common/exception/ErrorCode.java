@@ -34,9 +34,15 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "접근 권한이 없습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다."),
     INVALID_PAGE_SIZE(HttpStatus.BAD_REQUEST, "INVALID_PAGE_SIZE", "페이지 크기는 10, 30, 50만 가능합니다."),
-    INVALID_SORT_BY(HttpStatus.BAD_REQUEST, "INVALID_SORT_BY", "정렬 기준이 올바르지 않습니다.");
+    INVALID_SORT_BY(HttpStatus.BAD_REQUEST, "INVALID_SORT_BY", "정렬 기준이 올바르지 않습니다."),
 
     // 각 모듈 별로 담당자가 추가
+
+    // ── Delivery ────────────────────────────────────────
+    DELIVERY_NOT_FOUND(HttpStatus.NOT_FOUND, "DELEVERY_NOT_FOUND", "존재하지 않는 배송입니다."),
+    DELIVERY_ALREADY_DELETED(HttpStatus.CONFLICT, "DELIVERY_ALREADY_DELETED", "이미 삭제된 배송입니다."),
+    INVALID_DELIVERY_STATUS(HttpStatus.BAD_REQUEST, "INVALID_DELIVERY_STATUS", "유효하지 않은 배송 상태입니다."),
+    INVALID_DELIVERY_SEARCH_CONDITION(HttpStatus.BAD_REQUEST, "INVALID_DELIVERY_SEARCH_CONDITION", "배송 검색 조건이 올바르지 않습니다.");
 
     private final HttpStatus status;
     private final String code;
