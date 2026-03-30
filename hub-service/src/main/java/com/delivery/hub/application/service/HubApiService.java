@@ -38,7 +38,6 @@ public class HubApiService {
         }
 
         KakaoAddressService.GeoPoint geoPoint = kakaoaddressservice.getGeoPoint(command.address());
-
         Hub hub = Hub.createHub(
                 command.hub_name(), command.address(), geoPoint.latitude(), geoPoint.longitude()
         );
@@ -69,7 +68,6 @@ public class HubApiService {
 
         Hub hub = hubrepository.findById(hubId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 허브가 존재하지 않습니다."));
-
         if (request.hub_name() != null && !hub.getHub_name().equals(request.hub_name())) {
             if (hubrepository.existsByHubName(request.hub_name())) {
                 throw new IllegalArgumentException("이미 사용 중인 이름입니다.");
@@ -93,5 +91,18 @@ public class HubApiService {
         );
 
         return HubResponse.from(hub);
+    }
+
+    @Transactional
+    @CacheEvict(cacheNames = {"hubPages", "hubDetails"}, allEntries = true)
+    public void deleteHub(UUID hubId) {
+
+        Hub hub = hubrepository.findById(hubId)
+                .orElseThrow(() -> new IllegalArgumentException("삭제하려는 허브가 존재하지 않습니다. ID: " + hubId));
+        if (hub.isDeleted()) {
+            throw new IllegalArgumentException("이미 삭제된 허브입니다.");
+        }
+
+        hub.softDelete("master"); // TODO: 나중에 로그인한 유저 ID로 교체
     }
 }

@@ -82,4 +82,12 @@ public class HubController {
 
         return CommonResponse.ok(response);
     }
+
+    @DeleteMapping("/{hub_id}")
+    @Operation(summary = "허브 삭제", description = "허브를 삭제합니다")
+    public ResponseEntity<CommonResponse<?>> deleteHub(@PathVariable("hub_id") UUID hub_id) {
+        hubApiService.deleteHub(hub_id);
+
+        return CommonResponse.noContent();
+    }
 }
