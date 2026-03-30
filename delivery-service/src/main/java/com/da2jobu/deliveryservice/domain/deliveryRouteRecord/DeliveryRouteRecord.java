@@ -1,4 +1,4 @@
-package com.da2jobu.deliveryservice.deliveryRouteRecord.entity;
+package com.da2jobu.deliveryservice.domain.deliveryRouteRecord;
 
 import common.entity.BaseEntity;
 import jakarta.persistence.*;

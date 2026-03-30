@@ -1,4 +1,4 @@
-package com.da2jobu.deliveryservice.delivery.entity;
+package com.da2jobu.deliveryservice.domain.delivery;
 
 public enum DeliveryStatus {
     HUB_WAITING,                 // 허브 대기중

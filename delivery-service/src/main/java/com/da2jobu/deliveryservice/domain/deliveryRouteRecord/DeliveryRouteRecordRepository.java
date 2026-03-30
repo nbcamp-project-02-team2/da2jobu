@@ -1,6 +1,5 @@
-package com.da2jobu.deliveryservice.deliveryRouteRecord.repository;
+package com.da2jobu.deliveryservice.domain.deliveryRouteRecord;
 
-import com.da2jobu.deliveryservice.deliveryRouteRecord.entity.DeliveryRouteRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

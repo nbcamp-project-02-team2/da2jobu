@@ -1,4 +1,4 @@
-package com.da2jobu.deliveryservice.deliveryRouteRecord.entity;
+package com.da2jobu.deliveryservice.domain.deliveryRouteRecord;
 
 public enum DeliveryRouteStatus {
     WAITING,   // 허브 이동 대기중

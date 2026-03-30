@@ -1,4 +1,4 @@
-package com.da2jobu.deliveryservice.delivery.entity;
+package com.da2jobu.deliveryservice.domain.delivery;
 
 import common.entity.BaseEntity;
 import jakarta.persistence.*;
