@@ -7,6 +7,7 @@ import com.delivery.hub.domain.repository.HubRepository;
 import com.delivery.hub.infrastructure.client.KakaoAddressService;
 import com.delivery.hub.infrastructure.config.Redis.RestPage;
 import com.delivery.hub.interfaces.dto.Respone.HubResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -15,6 +16,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -49,5 +52,13 @@ public class HubApiService {
         Page<HubResponse> result = hubrepository.searchHubs(command, pageable);
 
         return new RestPage<>(result);
+    }
+
+    //특정 허브 상세 내용 조회
+    public HubResponse getHub(@Valid UUID hubId) {
+        Hub hub = hubrepository.findById(hubId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 허브를 찾을 수 없습니다. ID: " + hubId));
+
+        return HubResponse.detailFrom(hub);
     }
 }
