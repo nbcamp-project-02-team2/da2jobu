@@ -59,6 +59,10 @@ public class CompanyDomainService {
         throw new CustomException(ErrorCode.COMPANY_DELETE_FORBIDDEN);
     }
 
+    /**
+     * 업체 소속 권한 검증
+     * - HUB_MANAGER: 담당 허브 소속 업체 여부
+     */
     private void validateHubAccess(Company company, UUID userHubId) {
         if (!company.belongsToHub(HubId.of(userHubId))) {
             throw new CustomException(ErrorCode.COMPANY_HUB_MISMATCH);

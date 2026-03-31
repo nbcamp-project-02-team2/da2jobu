@@ -29,7 +29,6 @@ public class HubClientImpl implements HubClient {
              */
             hubFeignClient.getHub(hubId);
         } catch (FeignException.NotFound e) {
-            // 404는 재시도 의미 없음 → 즉시 예외 변환
             throw new CustomException(ErrorCode.HUB_NOT_FOUND);
         }
         // 그 외 FeignException은 Retry가 재시도, 소진 시 CB fallback

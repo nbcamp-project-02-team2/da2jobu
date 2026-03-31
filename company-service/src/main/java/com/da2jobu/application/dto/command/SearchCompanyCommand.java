@@ -1,11 +1,11 @@
-package com.da2jobu.application.dto.query;
+package com.da2jobu.application.dto.command;
 
 import com.da2jobu.domain.model.vo.CompanyType;
 
 import java.util.Set;
 import java.util.UUID;
 
-public record SearchCompanyQuery(
+public record SearchCompanyCommand(
         String name,
         CompanyType type,
         UUID hubId,

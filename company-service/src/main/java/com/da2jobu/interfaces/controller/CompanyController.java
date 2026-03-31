@@ -2,7 +2,7 @@ package com.da2jobu.interfaces.controller;
 
 import com.da2jobu.application.CompanyService;
 import com.da2jobu.application.dto.command.CreateCompanyCommand;
-import com.da2jobu.application.dto.query.SearchCompanyQuery;
+import com.da2jobu.application.dto.command.SearchCompanyCommand;
 import com.da2jobu.application.dto.command.UpdateCompanyCommand;
 import com.da2jobu.application.dto.result.CompanyResult;
 import com.da2jobu.domain.model.vo.CompanyType;
@@ -84,7 +84,7 @@ public class CompanyController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        SearchCompanyQuery command = new SearchCompanyQuery(name, type, hubId, page, size);
+        SearchCompanyCommand command = new SearchCompanyCommand(name, type, hubId, page, size);
         Page<CompanyResponse> result = companyService.searchCompanies(command).map(CompanyResponse::from);
         return CommonResponse.ok("업체 목록 조회 완료", result);
     }
