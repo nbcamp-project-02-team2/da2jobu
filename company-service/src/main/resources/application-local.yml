@@ -58,8 +58,8 @@ resilience4j:
           - feign.FeignException
           - java.io.IOException
         ignore-exceptions:
-          - feign.FeignException$BadRequest
-          - feign.FeignException$NotFound
+          - feign.FeignException.BadRequest
+          - feign.FeignException.NotFound
     instances:
       hubService:
         base-config: default

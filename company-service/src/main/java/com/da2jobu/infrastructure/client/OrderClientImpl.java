@@ -3,7 +3,6 @@ package com.da2jobu.infrastructure.client;
 import com.da2jobu.application.service.OrderClient;
 import common.exception.CustomException;
 import common.exception.ErrorCode;
-import feign.FeignException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -20,13 +19,11 @@ public class OrderClientImpl implements OrderClient {
     private final OrderFeignClient orderFeignClient;
 
     @Override
-//    @Retry(name = "orderService")
-//    @CircuitBreaker(name = "orderService", fallbackMethod = "orderServiceFallback")
+    @Retry(name = "orderService")
+    @CircuitBreaker(name = "orderService", fallbackMethod = "orderServiceFallback")
     public boolean hasActiveOrders(UUID companyId) {
-        // TODO: Postman 테스트용 stub — order-service 연동 시 아래 주석 해제
-//        return orderFeignClient.hasActiveOrders(companyId);
-        log.info("[STUB] 진행 중인 주문 조회 스킵: companyId={}", companyId);
-        return false;
+        // FeignException은 Retry가 재시도, 소진 시 CB fallback
+        return orderFeignClient.hasActiveOrders(companyId);
     }
 
     private boolean orderServiceFallback(UUID companyId, Throwable t) {

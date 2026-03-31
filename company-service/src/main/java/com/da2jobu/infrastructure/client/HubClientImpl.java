@@ -20,16 +20,19 @@ public class HubClientImpl implements HubClient {
     private final HubFeignClient hubFeignClient;
 
     @Override
-//    @Retry(name = "hubService")
-//    @CircuitBreaker(name = "hubService", fallbackMethod = "hubServiceFallback")
+    @Retry(name = "hubService")
+    @CircuitBreaker(name = "hubService", fallbackMethod = "hubServiceFallback")
     public void validateHubExists(UUID hubId) {
-        // TODO: Postman 테스트용 stub — hub-service 연동 시 아래 주석 해제
-//        try {
-//            hubFeignClient.getHub(hubId);
-//        } catch (FeignException.NotFound e) {
-//            throw new CustomException(ErrorCode.HUB_NOT_FOUND);
-//        }
-        log.info("[STUB] 허브 존재 검증 스킵: hubId={}", hubId);
+        try {
+            /**
+             * todo : 허브 매니저는 본인 담당 허브(hub_id)인지 허브 id가 존재하는지 검증
+             */
+            hubFeignClient.getHub(hubId);
+        } catch (FeignException.NotFound e) {
+            // 404는 재시도 의미 없음 → 즉시 예외 변환
+            throw new CustomException(ErrorCode.HUB_NOT_FOUND);
+        }
+        // 그 외 FeignException은 Retry가 재시도, 소진 시 CB fallback
     }
 
     private void hubServiceFallback(UUID hubId, Throwable t) {
