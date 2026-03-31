@@ -5,8 +5,7 @@ import com.da2jobu.domain.model.vo.CompanyId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
-import java.util.UUID;
 
-public interface JpaCompanyRepository extends JpaRepository<Company, UUID> {
+public interface JpaCompanyRepository extends JpaRepository<Company, CompanyId> {
     Optional<Company> findByCompanyIdAndDeletedAtIsNull(CompanyId companyId);
 }

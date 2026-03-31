@@ -8,7 +8,7 @@ public record UpdateCompanyCommand(
         UUID companyId,
         String userRole,
         UUID userHubId,
-        UUID userId,
+        UUID userCompanyId,
         UUID hubId,
         String name,
         CompanyType type,

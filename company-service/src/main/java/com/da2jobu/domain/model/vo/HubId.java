@@ -23,5 +23,10 @@ public class HubId {
         if (hubId == null) {
             throw new IllegalArgumentException("유효하지 않은 허브 id 입니다");
         }
+        this.hubId = hubId;
+    }
+
+    public boolean isSameAs(UUID hubId) {
+        return this.hubId.equals(hubId);
     }
 }

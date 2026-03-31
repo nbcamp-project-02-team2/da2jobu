@@ -25,6 +25,10 @@ public class Location {
         return location;
     }
 
+    public boolean isSameAddress(String address) {
+        return this.address.equals(address);
+    }
+
     private static void validate(String address, BigDecimal latitude, BigDecimal longitude) {
         if (address == null || address.isBlank()) {
             throw new IllegalArgumentException("주소는 필수입니다.");

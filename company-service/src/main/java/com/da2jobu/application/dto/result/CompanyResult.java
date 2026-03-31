@@ -8,7 +8,6 @@ import java.util.UUID;
 
 public record CompanyResult(
         UUID companyId,
-        UUID managerId,
         UUID hubId,
         String name,
         CompanyType type,
@@ -19,7 +18,6 @@ public record CompanyResult(
     public static CompanyResult from(Company company) {
         return new CompanyResult(
                 company.getCompanyId().getCompanyId(),
-                company.getManagerId() != null ? company.getManagerId().getManagerId() : null,
                 company.getHubId().getHubId(),
                 company.getName(),
                 company.getType(),
