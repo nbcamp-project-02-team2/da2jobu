@@ -22,10 +22,6 @@ public class Company extends BaseEntity {
     private CompanyId companyId;
 
     @Embedded
-    @AttributeOverride(name = "managerId", column = @Column(name = "manager_id"))
-    private ManagerId managerId;
-
-    @Embedded
     @AttributeOverride(name = "hubId", column = @Column(name = "hub_id", nullable = false))
     private HubId hubId;
 
@@ -66,14 +62,6 @@ public class Company extends BaseEntity {
     // ========== 비즈니스 로직 ==========
 
     /**
-     * 업체 담당자 배정
-     * Kafka 이벤트(user.role.assigned)를 통해 유저 서비스에서 COMPANY_MANAGER 롤 부여 시 호출
-     */
-    public void updateManagerId(UUID managerId) {
-        this.managerId = ManagerId.of(managerId);
-    }
-
-    /**
      * 업체 정보 수정
      * 업체명 변경 시 불변식 재검증
      */
@@ -88,16 +76,23 @@ public class Company extends BaseEntity {
     // ========== 조회 메서드 ==========
 
     /**
-     * 담당자 배정 여부 확인
+     * 특정 허브 소속 업체 여부 확인
      */
-    public boolean hasManager() {
-        return this.managerId != null;
+    public boolean belongsToHub(HubId hubId) {
+        return this.hubId.equals(hubId);
     }
 
     /**
-     * 특정 허브 소속 업체 여부 확인
+     * 허브 변경 여부 확인
      */
-    public boolean belongsToHub(UUID hubId) {
-        return this.hubId.getHubId().equals(hubId);
+    public boolean isHubChanged(UUID newHubId) {
+        return !this.hubId.isSameAs(newHubId);
+    }
+
+    /**
+     * 주소 변경 여부 확인
+     */
+    public boolean isAddressChanged(String newAddress) {
+        return !this.location.isSameAddress(newAddress);
     }
 }

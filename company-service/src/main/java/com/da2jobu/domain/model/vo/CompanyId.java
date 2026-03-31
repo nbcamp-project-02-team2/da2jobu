@@ -25,4 +25,8 @@ public class CompanyId {
         }
         this.companyId = companyId;
     }
+
+    public boolean isSameAs(UUID companyId) {
+        return this.companyId.equals(companyId);
+    }
 }

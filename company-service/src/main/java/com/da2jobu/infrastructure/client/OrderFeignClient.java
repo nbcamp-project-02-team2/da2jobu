@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
-@FeignClient(name = "user-service")
-public interface UserFeignClient {
+@FeignClient(name = "order-service")
+public interface OrderFeignClient {
 
-    @GetMapping("/api/users/{userId}")
-    void getUser(@PathVariable("userId") UUID userId);
+    @GetMapping("/api/orders/{companyId}")
+    boolean hasActiveOrders(@PathVariable("companyId") UUID orderId);
 }
