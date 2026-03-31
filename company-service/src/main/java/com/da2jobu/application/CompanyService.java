@@ -1,7 +1,7 @@
 package com.da2jobu.application;
 
 import com.da2jobu.application.dto.command.CreateCompanyCommand;
-import com.da2jobu.application.dto.query.SearchCompanyQuery;
+import com.da2jobu.application.dto.command.SearchCompanyCommand;
 import com.da2jobu.application.dto.command.UpdateCompanyCommand;
 import com.da2jobu.application.dto.result.CompanyResult;
 import com.da2jobu.application.service.CompanyEventPublisher;
@@ -45,7 +45,7 @@ public class CompanyService {
     @Transactional
     public CompanyResult createCompany(CreateCompanyCommand command) {
         log.info("업체 생성 요청: name={}, hubId={}, role={}", command.name(), command.hubId(), command.userRole());
-        //업체생성 권한 검증
+        //업체 생성 권한 검증
         companyDomainService.validateCreateAccess(command.userRole(), command.userHubId(), command.hubId());
         //허브 존재 여부 검증
         validateHubExists(command.hubId());
@@ -58,17 +58,10 @@ public class CompanyService {
                 command.type(),
                 location
         );
+
         Company savedCompany = companyRepository.save(company);
         log.info("업체 생성 완료: companyId={}", savedCompany.getCompanyId().getCompanyId());
         return CompanyResult.from(savedCompany);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<CompanyResult> searchCompanies(SearchCompanyQuery command) {
-        log.debug("업체 검색 요청: name={}, type={}, hubId={}, page={}, size={}", command.name(), command.type(), command.hubId(), command.page(), command.validatedSize());
-        PageRequest pageable = PageRequest.of(command.page(), command.validatedSize());
-        return companyRepository.search(command.name(), command.type(), command.hubId(), pageable)
-                .map(CompanyResult::from);
     }
 
     @Transactional(readOnly = true)
@@ -84,9 +77,8 @@ public class CompanyService {
         Company company = findCompanyOrThrow(command.companyId());
         //접근 권한 및 필드 수정 권한 검증
         companyDomainService.validateUpdateAccess(company, command.userRole(), command.userHubId(), command.userCompanyId());
-        //바뀐 허브 id 검증
+        //변경된 허브 id 존재 여부 검증
         if (company.isHubChanged(command.hubId())) {
-            log.debug("업체 수정 허브 변경 감지: 기존={}, 신규={}", company.getHubId().getHubId(), command.hubId());
             validateHubExists(command.hubId());
         }
         //주소 변동 시 카카오 api 새로 호출 후 추출
@@ -115,20 +107,25 @@ public class CompanyService {
             log.warn("업체 삭제 거부, 진행 중인 주문 존재: companyId={}", companyId);
             throw new CustomException(ErrorCode.COMPANY_HAS_ACTIVE_ORDERS);
         }
-
         company.softDelete(deletedBy);
         companyEventPublisher.publishCompanyDeleted(companyId, deletedBy, company.getDeletedAt());
         log.info("업체 삭제 완료: companyId={}", companyId);
     }
+
+    @Transactional(readOnly = true)
+    public Page<CompanyResult> searchCompanies(SearchCompanyCommand command) {
+        log.debug("업체 검색 요청: name={}, type={}, hubId={}, page={}, size={}", command.name(), command.type(), command.hubId(), command.page(), command.validatedSize());
+        PageRequest pageable = PageRequest.of(command.page(), command.validatedSize());
+        return companyRepository.search(command.name(), command.type(), command.hubId(), pageable)
+                .map(CompanyResult::from);
+    }
+
 
     private Company findCompanyOrThrow(UUID companyId) {
         return companyRepository.findByIdAndDeletedAtIsNull(companyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
     }
 
-    /**
-     * 도메인 외부 검증 로직
-     */
     private void validateHubExists(UUID hubId) {
         hubClient.validateHubExists(hubId);
     }
