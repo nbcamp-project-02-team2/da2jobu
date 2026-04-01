@@ -54,7 +54,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             String userId = claims.getSubject();
             String username = claims.get("username", String.class);
             String role = claims.get("role", String.class);
-
+            log.info("approve request role={}", role);
             log.info("JWT 파싱 userId={}, username={}, role={}", userId, username, role);
 
             ServerWebExchange mutatedExchange = exchange.mutate()
