@@ -33,7 +33,9 @@ repositories {
 }
 
 dependencies {
-    implementation project(':common-libs:common')
+    implementation project(':common')
+    compileOnly project(':common')
+    annotationProcessor project(':common')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -57,6 +59,19 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
+
+sourceSets {
+    main {
+        java {
+            srcDirs += ["${project(':common').projectDir}/src/main/java"]
+        }
+    }
+}
+
+tasks.named('compileJava') {
+    dependsOn ':common:compileJava'
+}
+
 
 tasks.named('test') {
     useJUnitPlatform()

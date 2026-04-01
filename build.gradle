@@ -39,6 +39,9 @@ subprojects {
 
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
+//        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+        implementation 'org.springframework.boot:spring-boot-starter-web'
 
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -51,11 +54,11 @@ subprojects {
 
 project(':hub-service') {
     dependencies {
-        implementation project(':common-libs')
+        implementation project(':common')
     }
 }
 
-project(':common-libs') {
+project(':common') {
     bootJar.enabled = false
     jar.enabled = true
 }
