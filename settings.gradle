@@ -1,6 +1,11 @@
 rootProject.name = 'da2joburereung'
 
 include 'common'
+include 'eureka-server'
+include 'gateway-service'
+include 'user-service'
+include 'notification-service'
+include 'company-service'
+include 'hub-service'
 include 'delivery-service'
 include 'delivery_manager-service'
-include 'notification-service'
