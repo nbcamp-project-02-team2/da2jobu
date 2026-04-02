@@ -57,6 +57,11 @@ project(':hub-service') {
         implementation project(':common')
     }
 }
+project(':product-service') {
+    dependencies {
+        implementation project(':common')
+    }
+}
 
 project(':common') {
     bootJar.enabled = false
