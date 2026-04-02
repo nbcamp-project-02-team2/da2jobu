@@ -14,7 +14,7 @@ services:
     image: postgres:16
     container_name: user-db
     environment:
-      POSTGRES_DB: ${USER_DB_NAME}
+      POSTGRES_DB: ${USER_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
@@ -33,7 +33,7 @@ services:
       - "${USER_SERVER_PORT}:8082"
     environment:
       SERVER_PORT: 8082
-      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/${USER_DB_NAME}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/${USER_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
@@ -53,6 +53,38 @@ services:
       SERVER_PORT: 8080
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
       JWT_SECRET: ${JWT_SECRET}
+
+  product-db:
+    image: postgres:15
+    container_name: product-db
+    environment:
+      POSTGRES_DB: ${PRODUCT_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${PRODUCT_DB_PORT}:5432"
+    volumes:
+      - product-db-data:/var/lib/postgresql/data
+
+  product-service:
+    build:
+      context: ./product-service
+    container_name: product-service
+    depends_on:
+      - eureka-server
+      - product-db
+      - redis
+    ports:
+      - "${PRODUCT_SERVER_PORT}:8090"
+    environment:
+      SERVER_PORT: 8090
+      SPRING_DATASOURCE_URL: jdbc:postgresql://product-db:5432/${PRODUCT_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
   redis:
     image: redis:7
     container_name: redis
@@ -86,3 +118,4 @@ services:
 
 volumes:
   user-db-data:
+  product-db-data:
