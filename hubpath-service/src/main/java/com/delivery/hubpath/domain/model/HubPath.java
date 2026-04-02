@@ -5,6 +5,7 @@ import common.client.KakaoAddressService;
 import common.client.KakaoAddressService.GeoPoint;
 import common.client.KakaoAddressService.RouteSummary;
 import common.entity.BaseEntity;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -45,10 +46,28 @@ public class HubPath extends BaseEntity {
     @Column(name = "middle_hub_name")
     private String middleHubName;
 
+    @Column(name = "first_distance", precision = 10, scale = 2)
+    @Schema(description = "출발 허브에서 중간 경유지까지의 거리 (단위: km)", example = "120.50")
+    private BigDecimal firstDistance;
+
+    @Column(name = "first_duration")
+    @Schema(description = "출발 허브에서 중간 경유지까지의 소요 시간 (단위: 분)", example = "95")
+    private Integer firstDuration;
+
+    @Column(name = "second_distance", precision = 10, scale = 2)
+    @Schema(description = "중간 경유지에서 도착 허브까지의 거리 (단위: km)", example = "85.20")
+    private BigDecimal secondDistance;
+
+    @Column(name = "second_duration")
+    @Schema(description = "중간 경유지에서 도착 허브까지의 소요 시간 (단위: 분)", example = "70")
+    private Integer secondDuration;
+
     @Column(name = "distance", nullable = false, precision = 10, scale = 2)
+    @Schema(description = "출발 허브에서 도착 허브까지 총 거리 (단위: km)", example = "205.70")
     private BigDecimal distance;
 
     @Column(name = "duration", nullable = false)
+    @Schema(description = "출발 허브에서 도착 허브까지 총 소요 시간 (단위: 분)", example = "165")
     private Integer duration;
 
     public static HubPath createPath(HubResponse depart, HubResponse arrive, List<HubResponse> allHubs, KakaoAddressService kakaoService) {
@@ -86,8 +105,26 @@ public class HubPath extends BaseEntity {
         this.arriveHubName = arrive.getHub_name();
         this.middleHubId = middle != null ? middle.getId() : null;
         this.middleHubName = middle != null ? middle.getHub_name() : null;
+
+        // 전체 합산
         this.distance = BigDecimal.valueOf(summary.distanceMeter() / 1000.0);
         this.duration = summary.durationSecond() / 60;
+
+        // 출발 허브 -> 중간 경유지 / 중간 경유지 -> 도착 허브까지의 각각의 거리와 소요 시간
+        if (middle != null) {
+            RouteSummary firstLeg = kakaoService.getRouteSummary(origin, waypoint, null);
+            RouteSummary secondLeg = kakaoService.getRouteSummary(waypoint, destination, null);
+
+            this.firstDistance = BigDecimal.valueOf(firstLeg.distanceMeter() / 1000.0);
+            this.firstDuration = firstLeg.durationSecond() / 60;
+            this.secondDistance = BigDecimal.valueOf(secondLeg.distanceMeter() / 1000.0);
+            this.secondDuration = secondLeg.durationSecond() / 60;
+        } else {
+            this.firstDistance = this.distance;
+            this.firstDuration = this.duration;
+            this.secondDistance = BigDecimal.ZERO;
+            this.secondDuration = 0;
+        }
     }
 
     private List<HubResponse> findDijkstraPath(HubResponse start, HubResponse end, List<HubResponse> allHubs) {

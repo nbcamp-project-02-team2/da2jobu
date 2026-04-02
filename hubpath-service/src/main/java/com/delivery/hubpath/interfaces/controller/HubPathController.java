@@ -17,6 +17,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -51,4 +53,12 @@ public class HubPathController {
 
         return CommonResponse.ok(responses);
     }
+
+    @GetMapping("/{hubPathId}")
+    @Operation(summary = "특정 허브 간 이동 경로 디테일 정보", description = "이동간의 디테일 정보를 보여줍니다.")
+    public ResponseEntity<CommonResponse<HubPathResponse>> getHubPath(@PathVariable UUID hubPathId) {
+        return CommonResponse.ok(hubPathApiService.getHubPathDetail(hubPathId));
+    }
+
+
 }

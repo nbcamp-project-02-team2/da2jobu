@@ -16,6 +16,10 @@ public record HubPathResponse(
         String arriveHubName,
         UUID middleHubId,
         String middleHubName,
+        BigDecimal firstDistance,
+        Integer firstDuration,
+        BigDecimal secondDistance,
+        Integer secondDuration,
         BigDecimal distance,
         Integer duration,
         String createdBy,
@@ -24,8 +28,7 @@ public record HubPathResponse(
         LocalDateTime updatedAt,
         String deletedBy,
         LocalDateTime deletedAt
-)
-{
+) {
     public static HubPathResponse from(HubPath entity) {
         return new HubPathResponse(
                 entity.getHub_path_id(),
@@ -35,6 +38,30 @@ public record HubPathResponse(
                 entity.getArriveHubName(),
                 entity.getMiddleHubId(),
                 entity.getMiddleHubName(),
+                null, null, null, null,
+                entity.getDistance(),
+                entity.getDuration(),
+                entity.getCreatedBy(),
+                entity.getCreatedAt(),
+                entity.getUpdatedBy(),
+                entity.getUpdatedAt(),
+                entity.getDeletedBy(),
+                entity.getDeletedAt()
+        );
+    }
+    public static HubPathResponse detailFrom(HubPath entity) {
+        return new HubPathResponse(
+                entity.getHub_path_id(),
+                entity.getDepartHubId(),
+                entity.getDepartHubName(),
+                entity.getArriveHubId(),
+                entity.getArriveHubName(),
+                entity.getMiddleHubId(),
+                entity.getMiddleHubName(),
+                entity.getFirstDistance(),
+                entity.getFirstDuration(),
+                entity.getSecondDistance(),
+                entity.getSecondDuration(),
                 entity.getDistance(),
                 entity.getDuration(),
                 entity.getCreatedBy(),
