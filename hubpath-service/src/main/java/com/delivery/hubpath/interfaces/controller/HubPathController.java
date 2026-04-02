@@ -76,4 +76,13 @@ public class HubPathController {
         return CommonResponse.created("경로가 성공적으로 생성되었습니다.",response);
     }
 
+    @DeleteMapping("/{hubPathId}")
+    @Operation(summary = "허브 간 경로 삭제",description = "허브 간 경로를 삭제합니다")
+    public ResponseEntity<CommonResponse<?>> deleteHubPath(
+            @PathVariable UUID hubPathId) {
+
+        hubPathApiService.deleteHubPath(hubPathId);
+
+        return CommonResponse.noContent();
+    }
 }

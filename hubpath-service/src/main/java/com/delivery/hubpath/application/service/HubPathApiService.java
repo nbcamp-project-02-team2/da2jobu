@@ -112,11 +112,23 @@ public class HubPathApiService {
                 ));
     }
 
+    // 허브 간 경로 수정
     private List<HubResponse> fetchAllHubs() {
         CommonResponse<List<HubResponse>> response = hubClient.getAllHubs();
         if (response == null || response.getData() == null) {
             throw new IllegalStateException("전체 허브 목록을 가져오는 데 실패했습니다.");
         }
         return response.getData();
+    }
+
+    // 허브 간 경로 삭제
+    public void deleteHubPath(UUID hubPathId) {
+        HubPath hubPath = hubPathRepository.findById(hubPathId)
+                .orElseThrow(() -> new EntityNotFoundException("삭제할 경로 정보를 찾을 수 없습니다. ID: " + hubPathId));
+        if (hubPath.isDeleted()) {
+            throw new IllegalStateException("이미 삭제된 경로입니다.");
+        }
+
+        hubPath.softDelete("master"); // TODO: 나중에 로그인한 유저 ID로 교체
     }
 }
