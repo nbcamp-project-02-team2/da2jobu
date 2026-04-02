@@ -11,6 +11,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "delivery_manager",
         uniqueConstraints = @UniqueConstraint(name = "uq_delivery_manager_user_id", columnNames = "user_id"))
@@ -38,9 +40,6 @@ public class DeliveryManager extends BaseEntity {
     @Column(name = "seq", nullable = false)
     private Integer seq;
 
-    @Column(name = "is_available", nullable = false)
-    private boolean isAvailable = true;
-
     // ── Factory Method ────────────────────────────────────────────────────────
 
     public static DeliveryManager create(
@@ -55,8 +54,11 @@ public class DeliveryManager extends BaseEntity {
         manager.hubId = hubId;
         manager.type = type;
         manager.seq = seq;
-        manager.isAvailable = true;
         return manager;
+    }
+
+    public static boolean isHubDeliveryManager(HubId hubId) {
+        return hubId == null;
     }
 
 }

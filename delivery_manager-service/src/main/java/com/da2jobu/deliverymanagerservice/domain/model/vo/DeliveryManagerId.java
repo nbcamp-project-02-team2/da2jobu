@@ -6,13 +6,17 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.UUID;
 
 @Embeddable
 @Getter
 @EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class DeliveryManagerId {
+public class DeliveryManagerId implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private UUID deliveryManagerId;
 
     public static DeliveryManagerId of() {

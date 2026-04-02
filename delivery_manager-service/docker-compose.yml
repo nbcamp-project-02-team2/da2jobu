@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: 1234
       TZ: Asia/Seoul
     ports:
-      - "5434:5432"
+      - "5094:5432"
     volumes:
       - delivery_db_data:/var/lib/postgresql/18/data
     networks:

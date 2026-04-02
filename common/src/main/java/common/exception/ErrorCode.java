@@ -47,7 +47,20 @@ public enum ErrorCode {
     // ── Delivery Route Record────────────────────────────
     DELIVERY_ROUTE_RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "DELIVERY_ROUTE_RECORD_NOT_FOUND", "존재하지 않는 배송 경로 기록입니다."),
     DELIVERY_ROUTE_RECORD_ALREADY_DELETED(HttpStatus.CONFLICT, "DELIVERY_ROUTE_RECORD_ALREADY_DELETED", "이미 삭제된 배송 경로 기록입니다."),
-    INVALID_DELIVERY_ROUTE_STATUS(HttpStatus.BAD_REQUEST, "INVALID_DELIVERY_ROUTE_STATUS", "유효하지 않은 배송 경로 상태입니다.");
+    INVALID_DELIVERY_ROUTE_STATUS(HttpStatus.BAD_REQUEST, "INVALID_DELIVERY_ROUTE_STATUS", "유효하지 않은 배송 경로 상태입니다."),
+
+    // ── Delivery Manager ─────────────────────────────────────────────────────
+    DELIVERY_MANAGER_NOT_FOUND(HttpStatus.NOT_FOUND, "DELIVERY_MANAGER_NOT_FOUND", "존재하지 않는 배송 담당자입니다."),
+    DELIVERY_MANAGER_ALREADY_EXISTS(HttpStatus.CONFLICT, "DELIVERY_MANAGER_ALREADY_EXISTS", "이미 등록된 배송 담당자입니다."),
+    DELIVERY_MANAGER_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "DELIVERY_MANAGER_LIMIT_EXCEEDED", "해당 유형·소속의 배송 담당자가 최대 인원(10명)에 도달했습니다."),
+    DELIVERY_MANAGER_INVALID_ROLE(HttpStatus.BAD_REQUEST, "DELIVERY_MANAGER_INVALID_ROLE", "배송 담당자 권한을 가진 사용자만 등록할 수 있습니다."),
+    DELIVERY_MANAGER_HUB_REQUIRED(HttpStatus.BAD_REQUEST, "DELIVERY_MANAGER_HUB_REQUIRED", "업체 배송 담당자는 소속 허브를 지정해야 합니다."),
+    DELIVERY_MANAGER_HUB_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "DELIVERY_MANAGER_HUB_NOT_ALLOWED", "허브 배송 담당자는 소속 허브를 지정할 수 없습니다."),
+    HUB_SERVICE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "HUB_SERVICE_ERROR", "허브 서비스 호출 중 오류가 발생했습니다."),
+    USER_SERVICE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "USER_SERVICE_ERROR", "유저 서비스 호출 중 오류가 발생했습니다."),
+    // ── Hub ──────────────────────────────────────────────────────────────────
+    HUB_NOT_FOUND(HttpStatus.NOT_FOUND, "HUB_NOT_FOUND", "존재하지 않는 허브입니다."),
+    HUB_ACCESS_DENIED(HttpStatus.FORBIDDEN, "HUB_ACCESS_DENIED", "해당 허브에 대한 접근 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String code;
