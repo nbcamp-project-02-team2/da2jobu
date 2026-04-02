@@ -7,6 +7,7 @@ import com.delivery.hubpath.domain.repository.HubPathRepository;
 import com.delivery.hubpath.infrastructure.client.HubClient;
 import com.delivery.hubpath.infrastructure.client.HubResponse;
 import com.delivery.hubpath.infrastructure.client.PageResponse;
+import com.delivery.hubpath.infrastructure.config.RestPage;
 import com.delivery.hubpath.interfaces.dto.request.SearchHubPathRequest;
 import com.delivery.hubpath.interfaces.dto.response.HubPathResponse;
 import common.client.KakaoAddressService;
@@ -15,6 +16,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -49,6 +52,7 @@ public class HubPathApiService {
     }
 
     // 전체 허브 이동 조회 혹은 검색으로 허브 검색
+    @Cacheable(cacheNames = "hubPathPages", key = "#request.toString() + #pageable.pageNumber")
     @Transactional(readOnly = true)
     public Page<HubPathResponse> searchHubPaths(SearchHubPathRequest request, Pageable pageable) {
 
@@ -58,8 +62,9 @@ public class HubPathApiService {
         Page<HubPath> pageResult = hubPathRepository.findByDepartHubNameContainingAndArriveHubNameContaining(
                 departName, arriveName, pageable
         );
+        List<HubPathResponse> dtoList = pageResult.map(HubPathResponse::from).getContent();
 
-        return pageResult.map(HubPathResponse::from);
+        return new RestPage<>(dtoList, pageable, pageResult.getTotalElements());
     }
 
     // 특정 허브 이동간 디테일 정보 검색
@@ -72,6 +77,10 @@ public class HubPathApiService {
     }
 
     // 허브 간의 이동 경로 수정
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "hubPathDetail", key = "#command.hub_path_id()"),
+            @CacheEvict(cacheNames = "hubPathPages", allEntries = true)
+    })
     @Transactional
     public HubPathResponse updateHubPath(UpdateHubPathCommand command) {
 
@@ -95,6 +104,21 @@ public class HubPathApiService {
         return HubPathResponse.detailFrom(hubPath);
     }
 
+    // 허브 간 경로 삭제
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "hubPathDetail", key = "#hubPathId"),
+            @CacheEvict(cacheNames = "hubPathPages", allEntries = true)
+    })
+    public void deleteHubPath(UUID hubPathId) {
+        HubPath hubPath = hubPathRepository.findById(hubPathId)
+                .orElseThrow(() -> new EntityNotFoundException("삭제할 경로 정보를 찾을 수 없습니다. ID: " + hubPathId));
+        if (hubPath.isDeleted()) {
+            throw new IllegalStateException("이미 삭제된 경로입니다.");
+        }
+
+        hubPath.softDelete("master"); // TODO: 나중에 로그인한 유저 ID로 교체
+    }
+
     private HubResponse fetchHubByName(String hubName) {
         CommonResponse<PageResponse<HubResponse>> response = hubClient.getHubs(hubName, null, 10, 0);
 
@@ -112,7 +136,6 @@ public class HubPathApiService {
                 ));
     }
 
-    // 허브 간 경로 수정
     private List<HubResponse> fetchAllHubs() {
         CommonResponse<List<HubResponse>> response = hubClient.getAllHubs();
         if (response == null || response.getData() == null) {
@@ -121,14 +144,4 @@ public class HubPathApiService {
         return response.getData();
     }
 
-    // 허브 간 경로 삭제
-    public void deleteHubPath(UUID hubPathId) {
-        HubPath hubPath = hubPathRepository.findById(hubPathId)
-                .orElseThrow(() -> new EntityNotFoundException("삭제할 경로 정보를 찾을 수 없습니다. ID: " + hubPathId));
-        if (hubPath.isDeleted()) {
-            throw new IllegalStateException("이미 삭제된 경로입니다.");
-        }
-
-        hubPath.softDelete("master"); // TODO: 나중에 로그인한 유저 ID로 교체
-    }
 }
