@@ -5,6 +5,7 @@ import com.delivery.hubpath.application.service.HubPathApiService;
 import com.delivery.hubpath.interfaces.dto.request.CreateHubPathRequest;
 import com.delivery.hubpath.interfaces.dto.response.HubPathResponse;
 import common.dto.CommonResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ public class HubPathController {
     private final HubPathApiService hubPathApiService;
 
     @PostMapping
+    @Operation(summary = "허브 간의 경로 생성",description = "출발 허브이름과 도착 허브이름을 받아 경로를 생성합니다")
     public ResponseEntity<CommonResponse<HubPathResponse>> createHubPath(@RequestBody CreateHubPathRequest request) {
 
         CreateHubPathCommand command = CreateHubPathCommand.of(request.departHubName(), request.arriveHubName());

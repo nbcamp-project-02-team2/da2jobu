@@ -5,8 +5,10 @@ import com.delivery.hubpath.domain.model.HubPath;
 import com.delivery.hubpath.domain.repository.HubPathRepository;
 import com.delivery.hubpath.infrastructure.client.HubClient;
 import com.delivery.hubpath.infrastructure.client.HubResponse;
+import com.delivery.hubpath.infrastructure.client.PageResponse;
 import com.delivery.hubpath.interfaces.dto.response.HubPathResponse;
 import common.client.KakaoAddressService;
+import common.dto.CommonResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,20 +30,29 @@ public class HubPathApiService {
     @Transactional
     public HubPathResponse createHubPath(CreateHubPathCommand command) {
 
-        HubResponse departHub = hubClient.getHubByName(command.departHubName()).getData();
-        if (departHub == null) {
-            throw new IllegalArgumentException("출발 허브 정보를 찾을 수 없습니다. ID: " + command.departHubName());
-        }
-        HubResponse arriveHub = hubClient.getHubByName(command.arriveHubName()).getData();
-        if (arriveHub == null) {
-            throw new IllegalArgumentException("도착 허브 정보를 찾을 수 없습니다. ID: " + command.arriveHubName());
-        }
+        HubResponse departHub = fetchHubByName(command.departHubName());
+        HubResponse arriveHub = fetchHubByName(command.arriveHubName());
 
-        List<HubResponse> allHubs = hubClient.getAllHubs().getData().getContent();
+        CommonResponse<List<HubResponse>> response = hubClient.getAllHubs();
+        List<HubResponse> allHubs = response.getData();
+        log.info("알고리즘에 사용될 활성 허브 개수: {}", allHubs.size()); // 여기서 10개가 찍힌다면 페이징 문제!
 
         HubPath hubPath = HubPath.createPath(departHub, arriveHub, allHubs, kakaoAddressService);
+
         HubPath savedPath = hubPathRepository.save(hubPath);
 
         return HubPathResponse.from(savedPath);
+    }
+
+    private HubResponse fetchHubByName(String hubName) {
+        CommonResponse<PageResponse<HubResponse>> response = hubClient.getHubs(hubName, null, 10, 0);
+
+        List<HubResponse> content = response.getData().getContent();
+
+        if (content == null || content.isEmpty()) {
+            throw new IllegalArgumentException("해당 이름의 허브를 찾을 수 없습니다: " + hubName);
+        }
+
+        return content.get(0);
     }
 }

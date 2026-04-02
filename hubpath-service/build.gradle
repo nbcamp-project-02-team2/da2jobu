@@ -19,7 +19,9 @@ repositories {
 }
 
 dependencies {
-    implementation project(':common-libs:common')
+    implementation project(':common')
+    compileOnly project(':common')
+    annotationProcessor project(':common')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -50,6 +52,18 @@ dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:2025.0.0"
     }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs += ["${project(':common').projectDir}/src/main/java"]
+        }
+    }
+}
+
+tasks.named('compileJava') {
+    dependsOn ':common:compileJava'
 }
 
 tasks.named('test') {

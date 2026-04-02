@@ -7,12 +7,12 @@ import common.client.KakaoAddressService.RouteSummary;
 import common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.GenericGenerator;
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
+@Slf4j
 @Entity
 @Table(name = "p_hub_path")
 @Getter
@@ -58,56 +58,134 @@ public class HubPath extends BaseEntity {
     }
 
     public void updatePath(HubResponse depart, HubResponse arrive, List<HubResponse> allHubs, KakaoAddressService kakaoService) {
-
-        double directDist = calculateHaversine(
-                depart.getLatitude().doubleValue(), depart.getLongitude().doubleValue(),
-                arrive.getLatitude().doubleValue(), arrive.getLongitude().doubleValue()
-        );
-
-        HubResponse middleHub = null;
-        GeoPoint waypoint = null;
-
-        if (directDist >= 170.0) {
-            middleHub = findMiddleHub(depart, arrive, allHubs);
-            waypoint = new GeoPoint(middleHub.getLatitude(), middleHub.getLongitude());
-        }
-
         GeoPoint origin = new GeoPoint(depart.getLatitude(), depart.getLongitude());
         GeoPoint destination = new GeoPoint(arrive.getLatitude(), arrive.getLongitude());
-        RouteSummary summary = kakaoService.getRouteSummary(origin, destination, waypoint);
+
+        // 1차적으로 출발허브와 도착허브 간의 거리 확인
+        RouteSummary summary = kakaoService.getRouteSummary(origin, destination, null);
+
+        HubResponse middle = null;
+        GeoPoint waypoint = null;
+
+        // 만약 출발허브와 도착허브 간의 거리가 200km가 넘어가면 실행
+        if (summary.distanceMeter() > 200000) {
+            // 다익스트라 알고리즘을 바탕으로 제일 효율적인 중간 허브 계산
+            List<HubResponse> path = findDijkstraPath(depart, arrive, allHubs);
+
+            // 반환된 경로 리스트가 [출발, 경유, 도착] 처럼 3개 이상일 경우 (경유지가 존재하는 경우)
+            if (path.size() > 2) {
+                middle = path.get(1);
+                waypoint = new GeoPoint(middle.getLatitude(), middle.getLongitude());
+                summary = kakaoService.getRouteSummary(origin, destination, waypoint);
+            }
+        }
 
         this.departHubId = depart.getId();
         this.departHubName = depart.getHub_name();
         this.arriveHubId = arrive.getId();
         this.arriveHubName = arrive.getHub_name();
-        this.middleHubId = middleHub != null ? middleHub.getId() : null;
-        this.middleHubName = middleHub != null ? middleHub.getHub_name() : null;
+        this.middleHubId = middle != null ? middle.getId() : null;
+        this.middleHubName = middle != null ? middle.getHub_name() : null;
         this.distance = BigDecimal.valueOf(summary.distanceMeter() / 1000.0);
         this.duration = summary.durationSecond() / 60;
     }
 
-    private HubResponse findMiddleHub(HubResponse depart, HubResponse arrive, List<HubResponse> allHubs) {
-        return allHubs.stream()
-                .filter(h -> !h.getHub_name().equals(depart.getHub_name()) && !h.getHub_name().equals(arrive.getHub_name()))
-                .peek(h -> {
-                    double d1 = calculateHaversine(depart.getLatitude().doubleValue(), depart.getLongitude().doubleValue(), h.getLatitude().doubleValue(), h.getLongitude().doubleValue());
-                    double d2 = calculateHaversine(h.getLatitude().doubleValue(), h.getLongitude().doubleValue(), arrive.getLatitude().doubleValue(), arrive.getLongitude().doubleValue());
-                    System.out.println("허브: " + h.getHub_name() + " | 합계 거리: " + (d1 + d2) + "km (d1:" + d1 + ", d2:" + d2 + ")");
-                })
-                .min(Comparator.comparingDouble(h -> {
-                    double dist1 = calculateHaversine(depart.getLatitude().doubleValue(), depart.getLongitude().doubleValue(), h.getLatitude().doubleValue(), h.getLongitude().doubleValue());
-                    double dist2 = calculateHaversine(h.getLatitude().doubleValue(), h.getLongitude().doubleValue(), arrive.getLatitude().doubleValue(), arrive.getLongitude().doubleValue());
-                    return dist1 + dist2;
-                }))
-                .orElseThrow(() -> new IllegalArgumentException("적절한 경유지를 찾을 수 없습니다."));
+    private List<HubResponse> findDijkstraPath(HubResponse start, HubResponse end, List<HubResponse> allHubs) {
+        Map<UUID, Double> dists = new HashMap<>();
+        Map<UUID, UUID> prevs = new HashMap<>();
+        PriorityQueue<DNode> pq = new PriorityQueue<>();
+
+        // 모든 허브의 최소 거리를 무한대로 초기화
+        for (HubResponse h : allHubs) {
+            dists.put(h.getId(), Double.MAX_VALUE);
+        }
+
+        dists.put(start.getId(), 0.0);
+        pq.add(new DNode(start.getId(), 0.0));
+
+        while (!pq.isEmpty()) {
+            DNode curr = pq.poll();
+
+            // 이미 더 짧은 경로를 찾았다면 패스
+            if (curr.w > dists.getOrDefault(curr.id, Double.MAX_VALUE)) continue;
+
+            // 목적지 허브에 도착했다면 탐색 중단
+            if (curr.id.equals(end.getId())) break;
+
+            HubResponse u = getH(allHubs, curr.id);
+            if (u == null) continue;
+
+            for (HubResponse v : allHubs) {
+                if (u.getId().equals(v.getId())) continue;
+
+                double d = haversine(u, v);
+
+                // 허브 간 거리가 너무 멀면 연결하지 않음
+                if (d > 250) continue;
+
+                // 기존 기록된 거리보다 현재 노드를 거쳐가는 거리가 더 짧으면 갱신
+                double newDist = dists.get(u.getId()) + d;
+                if (newDist < dists.getOrDefault(v.getId(), Double.MAX_VALUE)) {
+                    dists.put(v.getId(), newDist);
+                    prevs.put(v.getId(), u.getId());
+                    pq.add(new DNode(v.getId(), newDist));
+                }
+            }
+        }
+
+        LinkedList<HubResponse> res = new LinkedList<>();
+        UUID currentId = end.getId();
+
+        // 목적지까지의 거리가 여전히 무한대라면 도달할 수 있는 경로가 없음
+        Double endDist = dists.get(currentId);
+        if (dists.get(currentId) != null && dists.get(currentId) != Double.MAX_VALUE) {
+            while (currentId != null) {
+                HubResponse foundHub = getH(allHubs, currentId);
+                if (foundHub == null) break;
+                res.addFirst(foundHub);
+                currentId = prevs.get(currentId);
+            }
+        }
+
+        // 경로가 비었거나 시작점이 일치하지 않으면 연결 실패로 간주하고 출발/도착 직행 반환
+        return res.isEmpty() || !res.getFirst().getId().equals(start.getId()) ? List.of(start, end) : res;
     }
 
-    private static double calculateHaversine(double lat1, double lon1, double lat2, double lon2) {
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
+    // 두 지점 간의 위도/경도를 이용한 직선 거리 계산
+    private double haversine(HubResponse h1, HubResponse h2) {
+        double lat1 = h1.getLatitude().doubleValue(), lon1 = h1.getLongitude().doubleValue();
+        double lat2 = h2.getLatitude().doubleValue(), lon2 = h2.getLongitude().doubleValue();
+
+        // 각각의 위도와 경도의 차이를 구한뒤 라디안 단위로 변환
+        double dLat = Math.toRadians(lat2 - lat1), dLon = Math.toRadians(lon2 - lon1);
+
+        // 위도는 어디서나 간격이 일정하여 1도 차이는 지구 전체 둘레 40,000/360으로 구하면 되지만
+        // 경도는 위치에 따라서 폭의 차이가 있으므로 보정이 필요한데 cos(위도)값을 넣어서 계산하는 방식이다
+        // 그래서 1라디안은 대략 0.0174이며 이를 각 위도 만큼에 차이만큰 곱하여 이를 2로 나누어 세로(위도)의 값을 구하고,
+        // 경도는 위에 방식과 똑같지만 추가로 위도에 차에 따른 값 보정을 해줘야함으로 각각의 위도를 cos(위도 값)을 넣어서 구한후
+        // 출발cos(위도)값 * 도착cos(위도)값 * 0.0087(1라디안/2)*(출발위도-도착위도)를 곱해서 가로 값을 구한다
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        // 6371은 지구 반지름값이고 이를 세로(위도차이)+가로(경도차이) 값a을 구한다음
+        // 각도 c = 2  x atan2(sqrt{a}, \sqrt{1-a})로 계산하여
+        // 최종 예산 거리 = 6371 x c를 구할 수 있다.
         return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    // 리스트에서 특정 ID에 해당하는 허브 객체 찾기
+    private HubResponse getH(List<HubResponse> l, UUID id) {
+        if (id == null) return null;
+        return l.stream()
+                .filter(h -> h.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    // 다익스트라 우선순위 큐를 위한 내부 정적 클래스
+    @AllArgsConstructor
+    private static class DNode implements Comparable<DNode> {
+        UUID id; double w;
+        @Override public int compareTo(DNode o) { return Double.compare(this.w, o.w); } // 거리가 짧은 순으로 정렬되도록 설정
     }
 }

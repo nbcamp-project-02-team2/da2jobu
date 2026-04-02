@@ -10,12 +10,14 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record HubPathResponse(
         UUID hub_path_id,
+        UUID departHubId,
         String departHubName,
+        UUID arriveHubId,
         String arriveHubName,
+        UUID middleHubId,
         String middleHubName,
         BigDecimal distance,
         Integer duration,
-        String createdBy,
         LocalDateTime createdAt,
         String updatedBy,
         LocalDateTime updatedAt,
@@ -23,20 +25,22 @@ public record HubPathResponse(
         LocalDateTime deletedAt
 )
 {
-    public static HubPathResponse from(HubPath hubPath) {
+    public static HubPathResponse from(HubPath entity) {
         return new HubPathResponse(
-                hubPath.getHub_path_id(),
-                hubPath.getDepartHubName(),
-                hubPath.getArriveHubName(),
-                hubPath.getMiddleHubName(),
-                hubPath.getDistance(),
-                hubPath.getDuration(),
-                hubPath.getCreatedBy(),
-                hubPath.getCreatedAt(),
-                hubPath.getUpdatedBy(),
-                hubPath.getUpdatedAt(),
-                hubPath.getDeletedBy(),
-                hubPath.getDeletedAt()
+                entity.getHub_path_id(),
+                entity.getDepartHubId(),
+                entity.getDepartHubName(),
+                entity.getArriveHubId(),
+                entity.getArriveHubName(),
+                entity.getMiddleHubId(),
+                entity.getMiddleHubName(),
+                entity.getDistance(),
+                entity.getDuration(),
+                entity.getCreatedAt(),
+                entity.getUpdatedBy(),
+                entity.getUpdatedAt(),
+                entity.getDeletedBy(),
+                entity.getDeletedAt()
         );
     }
 }

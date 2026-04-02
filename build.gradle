@@ -54,15 +54,15 @@ subprojects {
 
 project(':hub-service') {
     dependencies {
-        implementation project(':common-libs')
+        implementation project(':common')
     }
 }
 project(':hubpath-service') {
     dependencies {
-        implementation project(':common-libs')
+        implementation project(':common')
     }
 }
-project(':common-libs') {
+project(':common') {
     bootJar.enabled = false
     jar.enabled = true
 }
