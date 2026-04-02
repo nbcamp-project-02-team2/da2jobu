@@ -11,8 +11,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.UUID;
-
 @Entity
 @Table(name = "delivery_manager",
         uniqueConstraints = @UniqueConstraint(name = "uq_delivery_manager_user_id", columnNames = "user_id"))

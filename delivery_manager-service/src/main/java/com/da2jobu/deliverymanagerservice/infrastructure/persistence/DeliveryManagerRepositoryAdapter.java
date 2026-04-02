@@ -7,8 +7,6 @@ import com.da2jobu.deliverymanagerservice.domain.model.vo.UserId;
 import com.da2jobu.deliverymanagerservice.domain.repository.DeliveryManagerRepository;
 import lombok.RequiredArgsConstructor;
 
-import java.util.UUID;
-
 @RequiredArgsConstructor
 public class DeliveryManagerRepositoryAdapter implements DeliveryManagerRepository {
 

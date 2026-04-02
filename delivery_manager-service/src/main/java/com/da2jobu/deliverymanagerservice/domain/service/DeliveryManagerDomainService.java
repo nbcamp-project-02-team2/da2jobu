@@ -9,8 +9,6 @@ import common.exception.CustomException;
 import common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 
-import java.util.UUID;
-
 @RequiredArgsConstructor
 public class DeliveryManagerDomainService {
 

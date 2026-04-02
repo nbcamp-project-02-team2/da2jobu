@@ -5,8 +5,6 @@ import com.da2jobu.deliverymanagerservice.domain.model.vo.DeliveryManagerType;
 import com.da2jobu.deliverymanagerservice.domain.model.vo.HubId;
 import com.da2jobu.deliverymanagerservice.domain.model.vo.UserId;
 
-import java.util.UUID;
-
 public interface DeliveryManagerRepository {
 
     DeliveryManager save(DeliveryManager deliveryManager);
