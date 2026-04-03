@@ -36,11 +36,6 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
     private final UserServiceClient userServiceClient;
     private final CompanyServiceClient companyServiceClient;
 
-    // DeliveryManager 모듈 완료후 수정할 예정
-    private static final UUID TEMP_COMPANY_DELIVERY_MANAGER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    private static final UUID TEMP_HUB_DELIVERY_MANAGER_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
-    // 임시 배정
-
     @Override
     public void execute(CreateDeliveryFromOrderCommand command) {
         log.info(
@@ -68,9 +63,10 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
         UUID originHubId = supplierCompany.hubId();
         UUID destinationHubId = receiverCompany.hubId();
 
-        // 배송 담당자 배정
-        UUID companyDeliveryManagerId = TEMP_COMPANY_DELIVERY_MANAGER_ID;
-        UUID hubDeliveryManagerId = TEMP_HUB_DELIVERY_MANAGER_ID;
+        // 배송 담당자 배정, 초기에는 null로 설정
+        // TODO: 배송 경로 배정 후에는 중간 배송 담당자 추가
+        UUID companyDeliveryManagerId = null;
+        UUID hubDeliveryManagerId = null;
 
         // 경로 고정, 추후 허브 경로 조회 로직으로 교체 예정
         BigDecimal hubToHubExpectedDistance = BigDecimal.valueOf(10.00);

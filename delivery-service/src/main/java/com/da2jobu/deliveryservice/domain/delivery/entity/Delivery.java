@@ -44,7 +44,7 @@ public class Delivery extends BaseEntity {
     @Column(name = "receiver_slack_id", nullable = false, length = 100)
     private String receiverSlackId;
 
-    @Column(name = "company_delivery_manager_id", nullable = false)
+    @Column(name = "company_delivery_manager_id")
     private UUID companyDeliveryManagerId;
 
     @Column(name = "request_note", length = 500)

@@ -2,6 +2,7 @@ package com.da2jobu.deliveryservice.application.delivery.service;
 
 import com.da2jobu.deliveryservice.application.delivery.command.CreateDeliveryFromOrderCommand;
 import com.da2jobu.deliveryservice.application.delivery.dto.CreateDeliveryResponseDto;
+import com.da2jobu.deliveryservice.domain.delivery.repository.DeliveryRepository;
 import com.da2jobu.deliveryservice.domain.delivery.vo.DeliveryStatus;
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.entity.DeliveryRouteRecord;
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.repository.DeliveryRouteRecordRepository;
@@ -33,6 +34,9 @@ class CreateDeliveryFromOrderServiceImplTest {
 
     @Mock
     private DeliveryRouteRecordRepository deliveryRouteRecordRepository;
+
+    @Mock
+    private DeliveryRepository deliveryRepository;
 
     @Mock
     private UserServiceClient userServiceClient;
