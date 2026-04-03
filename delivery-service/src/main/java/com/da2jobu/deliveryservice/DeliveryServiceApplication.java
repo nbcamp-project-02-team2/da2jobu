@@ -9,6 +9,7 @@ import org.springframework.data.web.config.EnableSpringDataWebSupport;
 
 import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
 
+@EnableFeignClients
 @SpringBootApplication(scanBasePackages = {
         "com.da2jobu.deliveryservice",
         "common"
