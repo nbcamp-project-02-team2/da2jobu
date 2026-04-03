@@ -16,7 +16,6 @@ import common.exception.CustomException;
 import common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -58,7 +57,7 @@ public class DeliveryManagerService {
     public DeliveryManagerResult getDeliveryManager(UUID deliveryManagerId, UUID requesterId, String requesterRole) {
         deliveryManagerDomainService.validateReadPermission(requesterRole);
         DeliveryManager deliveryManager = findDeliveryManagerOrThrow(deliveryManagerId);
-        deliveryManagerDomainService.validateReadIdentification(deliveryManager, requesterId,requesterRole);
+        deliveryManagerDomainService.validateReadIdentification(deliveryManager, requesterId, requesterRole);
         return DeliveryManagerResult.from(deliveryManager);
     }
 
@@ -69,7 +68,7 @@ public class DeliveryManagerService {
         HubId hubId = HubId.of(command.hubId());
         DeliveryManagerType type = command.type();
         int seq;
-        if (deliveryManager.isHubChanged(command.hubId())|| deliveryManager.isTypeChanged(type)) {
+        if (deliveryManager.isHubChanged(command.hubId()) || deliveryManager.isTypeChanged(type)) {
             deliveryManagerDomainService.validateCapacityLimit(type, hubId);
             seq = deliveryManagerDomainService.calculateNextSeq(type, hubId);
         } else {
@@ -103,7 +102,7 @@ public class DeliveryManagerService {
 
         PageRequest pageable = PageRequest.of(command.validatedPage(), command.validatedSize());
 
-        return deliveryManagerRepository.search(command.type(), command.hubId(),command.requesterId() ,command.requesterRole(), pageable)
+        return deliveryManagerRepository.search(command.type(), command.hubId(), command.requesterId(), command.requesterRole(), pageable)
                 .map(DeliveryManagerResult::from);
     }
 
