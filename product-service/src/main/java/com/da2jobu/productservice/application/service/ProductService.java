@@ -4,7 +4,9 @@ import com.da2jobu.productservice.domain.model.Product;
 import com.da2jobu.productservice.domain.repository.ProductPriceHistoryRepository;
 import com.da2jobu.productservice.domain.repository.ProductRepository;
 import com.da2jobu.productservice.infrastructure.client.CompanyClient;
+import com.da2jobu.productservice.infrastructure.client.CompanyInfoResponse;
 import com.da2jobu.productservice.infrastructure.client.UserClient;
+import com.da2jobu.productservice.infrastructure.client.UserInfoResponse;
 import com.da2jobu.productservice.interfaces.dto.request.ProductCreateRequest;
 import com.da2jobu.productservice.interfaces.dto.request.ProductUpdateRequest;
 import com.da2jobu.productservice.interfaces.dto.response.ProductPriceHistoryResponse;
@@ -44,21 +46,40 @@ public class ProductService {
     @Transactional
     public ProductResponse createProduct(ProductCreateRequest request,
                                           String userId, String username, String role) {
-        // 1. 업체 존재 여부 확인
-        validateCompanyExists(request.getCompanyId());
+        UUID companyId;
+        UUID hubId;
 
-        // 2. 업체가 해당 허브에 실제로 소속되어 있는지 검증 (데이터 정합성)
-        validateCompanyBelongsToHub(request.getCompanyId(), request.getHubId());
-
-        // 3. RBAC 권한 검증
-        validateCreatePermission(request.getCompanyId(), request.getHubId(), userId, role);
+        switch (role) {
+            case "MASTER" -> {
+                if (request.getCompanyId() == null || request.getHubId() == null) {
+                    throw new CustomException(ErrorCode.INVALID_INPUT);
+                }
+                companyId = request.getCompanyId();
+                hubId = request.getHubId();
+                validateCompany(companyId, hubId);
+            }
+            case "HUB_MANAGER" -> {
+                if (request.getCompanyId() == null) {
+                    throw new CustomException(ErrorCode.INVALID_INPUT);
+                }
+                hubId = getUserHubId(userId);
+                companyId = request.getCompanyId();
+                validateCompany(companyId, hubId);
+            }
+            case "COMPANY_MANAGER" -> {
+                companyId = getUserCompanyId(userId);
+                CompanyInfoResponse company = companyClient.getCompany(companyId).getData();
+                hubId = company.getHubId();
+            }
+            default -> throw new CustomException(ErrorCode.PRODUCT_CREATE_FORBIDDEN);
+        }
 
         Product product = Product.builder()
                 .name(request.getName())
                 .price(request.getPrice())
                 .stockQuantity(request.getStockQuantity())
-                .hubId(request.getHubId())
-                .companyId(request.getCompanyId())
+                .hubId(hubId)
+                .companyId(companyId)
                 .description(request.getDescription())
                 .build();
 
@@ -145,22 +166,14 @@ public class ProductService {
 
     // ── Private: FeignClient 유효성 검증 ──
 
-    /** 업체 서비스에 업체 존재 여부 확인 */
-    private void validateCompanyExists(UUID companyId) {
-        Boolean exists = companyClient.existsCompany(companyId);
-        if (Boolean.FALSE.equals(exists)) {
-            throw new CustomException(ErrorCode.COMPANY_NOT_FOUND);
-        }
-    }
-
     /**
-     * 업체가 해당 허브에 실제로 소속되어 있는지 검증.
-     * - p_company 테이블의 hub_id와 요청의 hubId가 일치하는지 확인
-     * - 모든 역할에 공통 적용 (데이터 정합성 보장)
+     * 업체 존재 여부 + 허브 소속 검증 (1회 호출로 통합).
+     * - company-service 404 → Circuit Breaker fallback → COMPANY_SERVICE_UNAVAILABLE
+     * - hubId 불일치 → PRODUCT_COMPANY_HUB_MISMATCH
      */
-    private void validateCompanyBelongsToHub(UUID companyId, UUID hubId) {
-        UUID companyHubId = companyClient.getHubIdByCompanyId(companyId);
-        if (!hubId.equals(companyHubId)) {
+    private void validateCompany(UUID companyId, UUID hubId) {
+        CompanyInfoResponse company = companyClient.getCompany(companyId).getData();
+        if (!hubId.equals(company.getHubId())) {
             throw new CustomException(ErrorCode.PRODUCT_COMPANY_HUB_MISMATCH);
         }
     }
@@ -168,28 +181,6 @@ public class ProductService {
     // ── Private: RBAC 권한 검증 ──
     // User 테이블에 hub_id, company_id가 있으므로
     // User-service에서 사용자의 소속 정보를 조회하여 상품의 소속 정보와 직접 비교
-
-    /** 상품 생성 권한 검증 */
-    private void validateCreatePermission(UUID companyId, UUID hubId, String userId, String role) {
-        switch (role) {
-            case "MASTER" -> { /* 무조건 가능 */ }
-            case "HUB_MANAGER" -> {
-                // 허브 관리자: 자신의 담당 허브에 소속된 업체의 상품만 생성 가능
-                UUID userHubId = getUserHubId(userId);
-                if (!hubId.equals(userHubId)) {
-                    throw new CustomException(ErrorCode.PRODUCT_CREATE_FORBIDDEN);
-                }
-            }
-            case "COMPANY_MANAGER" -> {
-                // 업체 담당자: 본인 업체의 상품만 생성 가능
-                UUID userCompanyId = getUserCompanyId(userId);
-                if (!companyId.equals(userCompanyId)) {
-                    throw new CustomException(ErrorCode.PRODUCT_CREATE_FORBIDDEN);
-                }
-            }
-            default -> throw new CustomException(ErrorCode.PRODUCT_CREATE_FORBIDDEN);
-        }
-    }
 
     /** 상품 수정 권한 검증 */
     private void validateUpdatePermission(Product product, String userId, String role) {
@@ -227,11 +218,11 @@ public class ProductService {
 
     /** User-service에서 사용자의 담당 허브 ID 조회 */
     private UUID getUserHubId(String userId) {
-        return userClient.getHubIdByUserId(UUID.fromString(userId));
+        return userClient.getMyInfo(userId).getData().getHubId();
     }
 
     /** User-service에서 사용자의 소속 업체 ID 조회 */
     private UUID getUserCompanyId(String userId) {
-        return userClient.getCompanyIdByUserId(UUID.fromString(userId));
+        return userClient.getMyInfo(userId).getData().getCompanyId();
     }
 }

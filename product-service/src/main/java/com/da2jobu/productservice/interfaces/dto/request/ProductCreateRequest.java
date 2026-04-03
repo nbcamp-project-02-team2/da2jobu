@@ -28,11 +28,9 @@ public class ProductCreateRequest {
     @Min(value = 0, message = "재고 수량은 0 이상이어야 합니다.")
     private Integer stockQuantity;
 
-    @NotNull(message = "허브 ID는 필수입니다.")
-    private UUID hubId;
+    private UUID hubId;    // MASTER만 필수, 나머지 역할은 자동 도출
 
-    @NotNull(message = "업체 ID는 필수입니다.")
-    private UUID companyId;
+    private UUID companyId; // MASTER/HUB_MANAGER만 필수, COMPANY_MANAGER는 자동 도출
 
     private String description;
 }
