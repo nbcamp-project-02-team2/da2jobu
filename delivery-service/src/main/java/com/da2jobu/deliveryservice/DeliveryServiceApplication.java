@@ -14,7 +14,6 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
         "com.da2jobu.deliveryservice",
         "common"
 })
-@EnableFeignClients(basePackages = "com.da2jobu.deliveryservice.infrastructure.deliveryManager.client")
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 @Import(JpaAuditingConfig.class)
 public class DeliveryServiceApplication {
