@@ -111,6 +111,8 @@ public class ProductController {
             @RequestParam(defaultValue = "desc") String direction) {
 
         validatePageSize(size);
+        validatePageNumber(page);
+        validateDirection(direction);
         Sort sort = Sort.by(Sort.Direction.fromString(direction), sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
 
@@ -130,6 +132,7 @@ public class ProductController {
             @RequestParam(defaultValue = "10") int size) {
 
         validatePageSize(size);
+        validatePageNumber(page);
         Pageable pageable = PageRequest.of(page, size);
 
         Page<ProductPriceHistoryResponse> response = productService.getPriceHistories(productId, pageable);
@@ -140,6 +143,20 @@ public class ProductController {
     private void validatePageSize(int size) {
         if (!ALLOWED_PAGE_SIZES.contains(size)) {
             throw new CustomException(ErrorCode.INVALID_PAGE_SIZE);
+        }
+    }
+
+    /** 페이지 번호 유효성 검증 (0 이상) */
+    private void validatePageNumber(int page) {
+        if (page < 0) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+    }
+
+    /** 정렬 방향 유효성 검증 (asc/desc만 허용) */
+    private void validateDirection(String direction) {
+        if (Sort.Direction.fromOptionalString(direction).isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
         }
     }
 }
