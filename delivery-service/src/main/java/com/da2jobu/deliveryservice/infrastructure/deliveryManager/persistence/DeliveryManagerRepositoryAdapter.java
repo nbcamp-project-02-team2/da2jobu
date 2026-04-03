@@ -7,7 +7,6 @@ import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryManag
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.HubId;
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.UserId;
 import com.da2jobu.deliveryservice.domain.deliveryManager.repository.DeliveryManagerRepository;
-import com.da2jobu.deliveryservice.infrastructure.deliveryManager.persistence.JpaDeliveryManagerRepository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +66,7 @@ public class DeliveryManagerRepositoryAdapter implements DeliveryManagerReposito
     }
 
     @Override
-    public Page<DeliveryManager> search(DeliveryManagerType type, UUID hubId, UUID userId,String userRole , Pageable pageable) {
+    public Page<DeliveryManager> search(DeliveryManagerType type, UUID hubId, UUID userId, String userRole, Pageable pageable) {
         QDeliveryManager qDeliveryManager = QDeliveryManager.deliveryManager;
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(qDeliveryManager.deletedAt.isNull());
