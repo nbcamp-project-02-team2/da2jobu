@@ -12,6 +12,9 @@ import java.util.UUID;
 
 public interface JpaDeliveryManagerRepository extends JpaRepository<DeliveryManager, DeliveryManagerId> {
 
+    // 삭제되지 않은 배송담당자 단건 조회
+    Optional<DeliveryManager> findByDeliveryManagerIdAndDeletedAtIsNull(DeliveryManagerId deliveryManagerId);
+
     // 배송담당자로 등록되어있는지 여부
     boolean existsByUserId_UserId(UUID userId);
 

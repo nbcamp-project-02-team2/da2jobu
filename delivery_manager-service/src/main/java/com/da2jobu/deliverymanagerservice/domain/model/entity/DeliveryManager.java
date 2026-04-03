@@ -5,11 +5,15 @@ import com.da2jobu.deliverymanagerservice.domain.model.vo.DeliveryManagerType;
 import com.da2jobu.deliverymanagerservice.domain.model.vo.HubId;
 import com.da2jobu.deliverymanagerservice.domain.model.vo.UserId;
 import common.entity.BaseEntity;
+import common.exception.CustomException;
+import common.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "delivery_manager",
@@ -55,8 +59,38 @@ public class DeliveryManager extends BaseEntity {
         return manager;
     }
 
-    public static boolean isHubDeliveryManager(HubId hubId) {
-        return hubId == null;
+    public void update(HubId hubId, DeliveryManagerType type, Integer seq) {
+        this.hubId = hubId;
+        this.type = type;
+        this.seq = seq;
     }
 
+    public static boolean isHubDeliveryManager(DeliveryManagerType type, HubId hubId) {
+        if (DeliveryManagerType.HUB_DELIVERY == type) {
+            if (hubId == null){
+                return true;
+            } else {
+                throw new CustomException(ErrorCode.DELIVERY_MANAGER_HUB_NOT_ALLOWED);
+            }
+
+        } else {
+            if (hubId != null){
+                return false;
+            } else {
+                throw new CustomException(ErrorCode.DELIVERY_MANAGER_HUB_REQUIRED);
+            }
+        }
+    }
+
+    /**
+     * 허브 변경 여부 확인
+     */
+    public boolean isHubChanged(UUID newHubId) {
+        return !this.hubId.isSameAs(newHubId);
+    }
+
+    /**
+     * 타입 변경 여부 확인
+     */
+    public boolean isTypeChanged(DeliveryManagerType newType) { return this.type != newType; }
 }
