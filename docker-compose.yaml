@@ -74,8 +74,8 @@ services:
       - eureka-server
       - product-db
       - redis
-    ports:
-      - "${PRODUCT_SERVER_PORT}:8090"
+    expose:
+      - "8090"
     environment:
       SERVER_PORT: 8090
       SPRING_DATASOURCE_URL: jdbc:postgresql://product-db:5432/${PRODUCT_DB}
