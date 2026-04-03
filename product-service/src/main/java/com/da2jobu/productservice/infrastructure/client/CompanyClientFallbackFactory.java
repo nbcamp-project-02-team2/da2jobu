@@ -1,5 +1,6 @@
 package com.da2jobu.productservice.infrastructure.client;
 
+import common.dto.CommonResponse;
 import common.exception.CustomException;
 import common.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +18,7 @@ public class CompanyClientFallbackFactory implements FallbackFactory<CompanyClie
         log.error("CompanyClient fallback 실행. 원인: {}", cause.getMessage());
         return new CompanyClient() {
             @Override
-            public Boolean existsCompany(UUID companyId) {
-                throw new CustomException(ErrorCode.COMPANY_SERVICE_UNAVAILABLE);
-            }
-
-            @Override
-            public UUID getHubIdByCompanyId(UUID companyId) {
+            public CommonResponse<CompanyInfoResponse> getCompany(UUID companyId) {
                 throw new CustomException(ErrorCode.COMPANY_SERVICE_UNAVAILABLE);
             }
         };
