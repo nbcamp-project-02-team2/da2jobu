@@ -8,7 +8,7 @@ COPY gradle ./gradle
 # common-libs 복사
 COPY common ./common
 
-# notification-service 소스 복사
+# delivery-service 소스 복사
 COPY delivery-service ./delivery-service
 
 RUN chmod +x gradlew

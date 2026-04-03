@@ -19,14 +19,20 @@ public class OrderAcceptedEventListener {
     public void consume(OrderAcceptedEvent event) {
         log.info("OrderAcceptedEvent 수신 - orderId={}", event.orderId());
 
-        CreateDeliveryFromOrderCommand command = new CreateDeliveryFromOrderCommand(
-                event.orderId(),
-                event.supplierId(),
-                event.receiverId(),
-                event.requirements(),
-                event.createdBy()
-        );
+        try {
+            CreateDeliveryFromOrderCommand command = new CreateDeliveryFromOrderCommand(
+                    event.orderId(),
+                    event.supplierId(),
+                    event.receiverId(),
+                    event.requirements(),
+                    event.createdBy()
+            );
 
-        createDeliveryFromOrderService.execute(command);
+            createDeliveryFromOrderService.execute(command);
+            log.info("OrderAcceptedEvent 처리 완료 - orderId={}", event.orderId());
+        } catch (Exception e) {
+            log.error("OrderAcceptedEvent 처리 실패 - orderId={}", event.orderId(), e);
+            throw e;
+        }
     }
 }

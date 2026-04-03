@@ -3,6 +3,7 @@ package com.da2jobu.deliveryservice.application.delivery.service;
 import com.da2jobu.deliveryservice.application.delivery.command.CreateDeliveryCommand;
 import com.da2jobu.deliveryservice.application.delivery.command.CreateDeliveryFromOrderCommand;
 import com.da2jobu.deliveryservice.application.delivery.dto.CreateDeliveryResponseDto;
+import com.da2jobu.deliveryservice.domain.delivery.repository.DeliveryRepository;
 import com.da2jobu.deliveryservice.domain.delivery.vo.DeliveryStatus;
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.entity.DeliveryRouteRecord;
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.repository.DeliveryRouteRecordRepository;
@@ -30,6 +31,7 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
     private final DeliveryService deliveryService;
 
     private final DeliveryRouteRecordRepository deliveryRouteRecordRepository;
+    private final DeliveryRepository deliveryRepository;
 
     private final UserServiceClient userServiceClient;
     private final CompanyServiceClient companyServiceClient;
@@ -48,6 +50,11 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
                 command.receiverId(),
                 command.createdBy()
         );
+
+        if (deliveryRepository.existsByOrderIdAndDeletedAtIsNull(command.orderId())) {
+            log.warn("이미 배송이 생성된 주문입니다. 중복 생성 스킵 - orderId={}", command.orderId());
+            return;
+        }
 
         // createdBy(username)로 사용자 조회
         // slackId가 null인지 확인 필요
