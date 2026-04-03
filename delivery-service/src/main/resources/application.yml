@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/delivery_db
+    url: jdbc:postgresql://localhost:5094/delivery_db
     username: postgres
     password: 1234
     driver-class-name: org.postgresql.Driver
@@ -9,3 +9,12 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+
+kakao:
+  api:
+    key: 496564f3c310718b565e9b52f14c43a0
