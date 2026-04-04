@@ -157,6 +157,24 @@ public class ProductService {
                 .map(ProductPriceHistoryResponse::from);
     }
 
+    /**
+     * 7. 재고 차감 (order-service 내부 호출용).
+     */
+    @Transactional
+    public void reduceStock(UUID productId, int quantity) {
+        Product product = findProductById(productId);
+        product.reduceStock(quantity);
+    }
+
+    /**
+     * 8. 재고 복구 (주문 취소 시 Kafka 이벤트 또는 order-service 내부 호출용).
+     */
+    @Transactional
+    public void restoreStock(UUID productId, int quantity) {
+        Product product = findProductById(productId);
+        product.restoreStock(quantity);
+    }
+
     // ── Private: 엔티티 조회 ──
 
     private Product findProductById(UUID productId) {

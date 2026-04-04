@@ -84,6 +84,20 @@ public class Product extends BaseEntity {
     }
 
     /**
+     * 재고 차감.
+     */
+    public void reduceStock(int quantity) {
+        this.stockQuantity -= quantity;
+    }
+
+    /**
+     * 재고 복구 (주문 취소 시).
+     */
+    public void restoreStock(int quantity) {
+        this.stockQuantity += quantity;
+    }
+
+    /**
      * 가격 변동 이력 추가.
      */
     private void addPriceHistory(BigDecimal previousPrice, BigDecimal newPrice,
