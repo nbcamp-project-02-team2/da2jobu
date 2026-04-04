@@ -44,7 +44,7 @@ public class Hub extends BaseEntity{
     private BigDecimal longitude;
 
     public static Hub createHub(String hubName, String address, BigDecimal latitude, BigDecimal longitude) {
-        return Hub.builder()
+        return (Hub) Hub.builder()
                 .hubName(hubName)
                 .address(address)
                 .latitude(latitude)
