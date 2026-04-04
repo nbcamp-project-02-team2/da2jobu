@@ -26,6 +26,7 @@ public class HubRepositoryImpl implements HubRepositoryCustom {
         List<Hub> content = queryFactory
                 .selectFrom(hub)
                 .where(
+                        hubIdEq(command.hub_id()),
                         nameContains(command.hub_name()),
                         addressContains(command.address()),
                         isNotDeleted()
@@ -40,6 +41,7 @@ public class HubRepositoryImpl implements HubRepositoryCustom {
                 .select(hub.count())
                 .from(hub)
                 .where(
+                        hubIdEq(command.hub_id()),
                         nameContains(command.hub_name()),
                         addressContains(command.address()),
                         isNotDeleted()
@@ -53,6 +55,10 @@ public class HubRepositoryImpl implements HubRepositoryCustom {
 
         // total이 null일 경우를 대비해 0L 처리
         return new PageImpl<>(dtoList, pageable, total != null ? total : 0L);
+    }
+
+    private BooleanExpression hubIdEq(java.util.UUID hubId) {
+        return hubId != null ? QHub.hub.hubId.eq(hubId) : null;
     }
 
     private BooleanExpression isNotDeleted() {

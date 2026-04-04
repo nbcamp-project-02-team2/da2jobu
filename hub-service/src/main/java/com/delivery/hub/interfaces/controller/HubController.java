@@ -49,7 +49,7 @@ public class HubController {
             @ModelAttribute SearchHubRequest searchRequest,
             @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        SearchHubCommand command = SearchHubCommand.of(searchRequest.hub_name(),searchRequest.address());
+        SearchHubCommand command = SearchHubCommand.of(searchRequest.hub_id(),searchRequest.hub_name(),searchRequest.address());
 
         int size = pageable.getPageSize();
         if (size != 10 && size != 30 && size != 50) {

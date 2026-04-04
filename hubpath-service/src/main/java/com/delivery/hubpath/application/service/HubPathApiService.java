@@ -10,6 +10,7 @@ import com.delivery.hubpath.infrastructure.client.PageResponse;
 import com.delivery.hubpath.infrastructure.config.RestPage;
 import com.delivery.hubpath.interfaces.dto.request.SearchHubPathRequest;
 import com.delivery.hubpath.interfaces.dto.response.HubPathResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import common.client.KakaoAddressService;
 import common.dto.CommonResponse;
 import jakarta.persistence.EntityNotFoundException;
@@ -41,12 +42,10 @@ public class HubPathApiService {
     public HubPathResponse createHubPath(CreateHubPathCommand command, String userRole, String username) {
         validateMasterRole(userRole);
 
-        HubResponse departHub = fetchHubByName(command.departHubName());
-        HubResponse arriveHub = fetchHubByName(command.arriveHubName());
+        HubResponse departHub = fetchHubById(command.departHubId());
+        HubResponse arriveHub = fetchHubById(command.arriveHubId());
 
         List<HubResponse> allHubs = fetchAllHubs();
-
-        log.info("서비스 :"+username);
 
         HubPath hubPath = HubPath.createPath(departHub, arriveHub, allHubs, kakaoAddressService);
         hubPath.setCreatedBy(username);
@@ -92,15 +91,15 @@ public class HubPathApiService {
         HubPath hubPath = hubPathRepository.findById(command.hub_path_id())
                 .orElseThrow(() -> new EntityNotFoundException("해당 경로를 찾을 수 없습니다. ID: " + command.hub_path_id()));
 
-        String finalDepartName = (command.departHubName() != null) ? command.departHubName() : hubPath.getDepartHubName();
-        String finalArriveName = (command.arriveHubName() != null) ? command.arriveHubName() : hubPath.getArriveHubName();
+        UUID finalDepartId = (command.departHubId() != null) ? command.departHubId() : hubPath.getDepartHubId();
+        UUID finalArriveId = (command.arriveHubId() != null) ? command.arriveHubId() : hubPath.getArriveHubId();
 
 //        if (finalDepartName.equals(hubPath.getDepartHubName()) && finalArriveName.equals(hubPath.getArriveHubName())) {
 //            return HubPathResponse.detailFrom(hubPath);
 //        }
 
-        HubResponse departHub = fetchHubByName(finalDepartName);
-        HubResponse arriveHub = fetchHubByName(finalArriveName);
+        HubResponse departHub = fetchHubById(finalDepartId);
+        HubResponse arriveHub = fetchHubById(finalArriveId);
 
         List<HubResponse> allHubs = fetchAllHubs();
 
@@ -134,21 +133,31 @@ public class HubPathApiService {
         }
     }
 
-    private HubResponse fetchHubByName(String hubName) {
-        CommonResponse<PageResponse<HubResponse>> response = hubClient.getHubs(hubName, null, 10, 0);
+    private HubResponse fetchHubById(UUID hubId) {
+        CommonResponse<PageResponse<HubResponse>> response = hubClient.getHubs(hubId, 1, 0);
 
-        if (response == null || response.getData() == null || response.getData().getContent().isEmpty()) {
-            throw new IllegalArgumentException("해당 이름의 허브를 찾을 수 없습니다: " + hubName);
+        if (response == null || response.getData() == null) {
+            throw new IllegalArgumentException("해당 ID의 허브를 찾을 수 없습니다: " + hubId);
         }
 
-        List<HubResponse> content = response.getData().getContent();
+        Object data = response.getData();
+        PageResponse<HubResponse> pageData;
 
-        return content.stream()
-                .filter(hub -> hub.getHub_name().equals(hubName))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "유사한 이름의 허브는 검색되었으나, 정확히 일치하는 '" + hubName + "' 허브가 존재하지 않습니다."
-                ));
+        if (data instanceof java.util.Map) {
+            ObjectMapper objectMapper = new ObjectMapper()
+                    .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+                    .registerModule(new com.fasterxml.jackson.datatype.jdk8.Jdk8Module());
+
+            pageData = objectMapper.convertValue(data, new com.fasterxml.jackson.core.type.TypeReference<PageResponse<HubResponse>>() {});
+        } else {
+            pageData = (PageResponse<HubResponse>) data;
+        }
+
+        if (pageData.getContent() == null || pageData.getContent().isEmpty()) {
+            throw new IllegalArgumentException("해당 ID의 허브를 찾을 수 없습니다: " + hubId);
+        }
+
+        return pageData.getContent().get(0);
     }
 
     private List<HubResponse> fetchAllHubs() {

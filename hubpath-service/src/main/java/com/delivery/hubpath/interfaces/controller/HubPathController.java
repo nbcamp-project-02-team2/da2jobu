@@ -38,9 +38,9 @@ public class HubPathController {
     public ResponseEntity<CommonResponse<HubPathResponse>> createHubPath(
             @Valid @RequestBody CreateHubPathRequest request,
             @RequestHeader("X-User-Role") String userRole,
-            @RequestHeader("X-User-Name") String username) {
+            @RequestHeader("X-Username") String username) {
 
-        CreateHubPathCommand command = CreateHubPathCommand.of(request.departHubName(), request.arriveHubName());
+        CreateHubPathCommand command = CreateHubPathCommand.of(request.departHubId(), request.arriveHubId());
 
         HubPathResponse response = hubPathApiService.createHubPath(command, userRole, username);
 
@@ -74,9 +74,9 @@ public class HubPathController {
             @PathVariable UUID hubPathId,
             @Valid @RequestBody UpdateHubPathRequest request,
             @RequestHeader("X-User-Role") String userRole,
-            @RequestHeader("X-User-Name") String username) {
+            @RequestHeader("X-Username") String username) {
 
-        UpdateHubPathCommand command = UpdateHubPathCommand.of(hubPathId, request.departHubName(), request.arriveHubName());
+        UpdateHubPathCommand command = UpdateHubPathCommand.of(hubPathId, request.departHubId(), request.arriveHubId());
 
         HubPathResponse response = hubPathApiService.updateHubPath(command, userRole, username);
 
@@ -88,7 +88,7 @@ public class HubPathController {
     public ResponseEntity<CommonResponse<?>> deleteHubPath(
             @PathVariable UUID hubPathId,
             @RequestHeader("X-User-Role") String userRole,
-            @RequestHeader("X-User-Name") String username) {
+            @RequestHeader("X-Username") String username) {
 
         hubPathApiService.deleteHubPath(hubPathId, userRole, username);
 

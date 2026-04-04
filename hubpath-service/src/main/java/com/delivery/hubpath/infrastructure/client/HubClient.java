@@ -6,14 +6,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.UUID;
 
 @FeignClient(name = "HUB-SERVICE")
 public interface HubClient {
 
     @GetMapping("/api/hubs")
-    CommonResponse<PageResponse<HubResponse>> getHubs(
-            @RequestParam(value = "hub_name", required = false) String hubName,
-            @RequestParam(value = "address", required = false) String address,
+    CommonResponse getHubs(
+            @RequestParam(value = "hub_id", required = false) UUID hubId,
             @RequestParam(value = "size") int size,
             @RequestParam(value = "page") int page
     );
