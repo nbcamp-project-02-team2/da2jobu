@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -45,7 +46,9 @@ public class CompanyService {
     public CompanyResult createCompany(CreateCompanyCommand command) {
         log.info("업체 생성 요청: name={}, hubId={}, role={}", command.name(), command.hubId(), command.userRole());
         UserClient.UserInfo userInfo = validateUserExists(command.userId());
-        companyDomainService.validateCreateAccess(command.userRole(), userInfo.hubId(), command.hubId());
+        if ("HUB_MANAGER".equals(command.userRole())) {
+            companyDomainService.validateHubCreateAccess(command.hubId(),userInfo.hubId());
+        }
         validateHubExists(command.hubId());
 
         Location location = locationClient.resolveLocation(command.address());
@@ -74,7 +77,11 @@ public class CompanyService {
         log.info("업체 수정 요청: companyId={}, role={}", command.companyId(), command.userRole());
         Company company = findCompanyOrThrow(command.companyId());
         UserClient.UserInfo userInfo = validateUserExists(command.userId());
-        companyDomainService.validateUpdateAccess(company, command.userRole(), userInfo.hubId(), userInfo.companyId());
+        if ("HUB_MANAGER".equals(command.userRole())) {
+            companyDomainService.validateHubAccess(company, userInfo.hubId());
+        } else if ("COMPANY_MANAGER".equals(command.userRole())) {
+            companyDomainService.validateCompanyAccess(company, userInfo.companyId());
+        }
         if (company.isHubChanged(command.hubId())) {
             validateHubExists(command.hubId());
         }
@@ -98,7 +105,9 @@ public class CompanyService {
         log.info("업체 삭제 요청: companyId={}, role={}, deletedBy={}", companyId, userRole, userId);
         Company company = findCompanyOrThrow(companyId);
         UserClient.UserInfo userInfo = validateUserExists(userId);
-        companyDomainService.validateDeleteAccess(company, userRole, userInfo.hubId());
+        if ("HUB_MANAGER".equals(userRole)) {
+            companyDomainService.validateHubAccess(company, userInfo.hubId());
+        }
         if (orderClient.hasActiveOrders(companyId)) {
             log.warn("업체 삭제 거부, 진행 중인 주문 존재: companyId={}", companyId);
             throw new CustomException(ErrorCode.COMPANY_HAS_ACTIVE_ORDERS);
@@ -116,6 +125,13 @@ public class CompanyService {
                 .map(CompanyResult::from);
     }
 
+    @Transactional(readOnly = true)
+    public List<CompanyResult> getCompaniesByIds(List<UUID> companyIds) {
+        return companyRepository.findAllByIdsAndDeletedAtIsNull(companyIds)
+                .stream()
+                .map(CompanyResult::from)
+                .toList();
+    }
 
     private Company findCompanyOrThrow(UUID companyId) {
         return companyRepository.findByIdAndDeletedAtIsNull(companyId)

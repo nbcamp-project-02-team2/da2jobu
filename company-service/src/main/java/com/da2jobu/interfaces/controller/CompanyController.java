@@ -9,6 +9,7 @@ import com.da2jobu.domain.model.vo.CompanyType;
 import com.da2jobu.interfaces.dto.request.CreateCompanyRequest;
 import com.da2jobu.interfaces.dto.request.UpdateCompanyRequest;
 import com.da2jobu.interfaces.dto.response.CompanyResponse;
+import com.da2jobu.interfaces.annotation.RequireRoles;
 import common.dto.CommonResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -31,14 +32,15 @@ public class CompanyController {
      * 업체 생성
      */
     @PostMapping
+    @RequireRoles({"MASTER", "HUB_MANAGER"})
     public ResponseEntity<CommonResponse<CompanyResponse>> createCompany(
             @Valid @RequestBody CreateCompanyRequest request,
             @RequestHeader("X-User-Role") String userRole,
-            @RequestHeader("X-User-Id") String userId
+            @RequestHeader("X-User-Id") UUID userId
     ) {
         CreateCompanyCommand command = new CreateCompanyCommand(
                 userRole,
-                UUID.fromString(userId),
+                userId,
                 request.hubId(),
                 request.name(),
                 request.type(),
@@ -52,16 +54,17 @@ public class CompanyController {
      * 업체 수정
      */
     @PutMapping("/{companyId}")
+    @RequireRoles({"MASTER", "HUB_MANAGER", "COMPANY_MANAGER"})
     public ResponseEntity<CommonResponse<CompanyResponse>> updateCompany(
             @PathVariable UUID companyId,
             @Valid @RequestBody UpdateCompanyRequest request,
             @RequestHeader("X-User-Role") String userRole,
-            @RequestHeader("X-User-Id") String userId
+            @RequestHeader("X-User-Id") UUID userId
     ) {
         UpdateCompanyCommand command = new UpdateCompanyCommand(
                 companyId,
                 userRole,
-                UUID.fromString(userId),
+                userId,
                 request.hubId(),
                 request.name(),
                 request.type(),
@@ -102,12 +105,13 @@ public class CompanyController {
      * 업체 삭제
      */
     @DeleteMapping("/{companyId}")
+    @RequireRoles({"MASTER", "HUB_MANAGER"})
     public ResponseEntity<CommonResponse<?>> deleteCompany(
             @PathVariable UUID companyId,
             @RequestHeader("X-User-Role") String userRole,
-            @RequestHeader("X-User-Id") String userId
+            @RequestHeader("X-User-Id") UUID userId
     ) {
-        companyService.deleteCompany(companyId, userRole, UUID.fromString(userId));
+        companyService.deleteCompany(companyId, userRole, userId);
         return CommonResponse.noContent();
     }
 }
