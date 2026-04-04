@@ -3,16 +3,18 @@ package com.da2jobu.deliveryservice.application.delivery.service;
 import com.da2jobu.deliveryservice.application.delivery.command.CreateDeliveryCommand;
 import com.da2jobu.deliveryservice.application.delivery.command.CreateDeliveryFromOrderCommand;
 import com.da2jobu.deliveryservice.application.delivery.dto.CreateDeliveryResponseDto;
+import com.da2jobu.deliveryservice.application.delivery.event.DeliveryCreatedEvent;
 import com.da2jobu.deliveryservice.domain.delivery.repository.DeliveryRepository;
 import com.da2jobu.deliveryservice.domain.delivery.vo.DeliveryStatus;
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.entity.DeliveryRouteRecord;
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.repository.DeliveryRouteRecordRepository;
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.vo.DeliveryRouteStatus;
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.vo.RouteLocationType;
-import com.da2jobu.deliveryservice.infrastructure.client.CompanyServiceClient;
-import com.da2jobu.deliveryservice.infrastructure.client.UserServiceClient;
-import com.da2jobu.deliveryservice.infrastructure.dto.CompanyInfoDto;
-import com.da2jobu.deliveryservice.infrastructure.dto.UserInfoDto;
+import com.da2jobu.deliveryservice.infrastructure.delivery.client.CompanyServiceClient;
+import com.da2jobu.deliveryservice.infrastructure.delivery.client.UserServiceClient;
+import com.da2jobu.deliveryservice.infrastructure.delivery.dto.CompanyInfoDto;
+import com.da2jobu.deliveryservice.infrastructure.delivery.dto.UserInfoDto;
+import com.da2jobu.deliveryservice.infrastructure.delivery.messaging.DeliveryEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,8 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
 
     private final DeliveryRouteRecordRepository deliveryRouteRecordRepository;
     private final DeliveryRepository deliveryRepository;
+
+    private final DeliveryEventProducer deliveryEventProducer;
 
     private final UserServiceClient userServiceClient;
     private final CompanyServiceClient companyServiceClient;
@@ -131,6 +135,12 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
 
         deliveryRouteRecordRepository.saveAll(List.of(route0, route1));
 
-        log.info("주문 기반 배송 생성 완료 - orderId={}, deliveryId={}", command.orderId(), deliveryId);
+        DeliveryCreatedEvent event = new DeliveryCreatedEvent(
+                command.orderId(),
+                deliveryId
+        );
+        deliveryEventProducer.publishDeliveryCreated(event);
+
+        log.info("주문 기반 배송 생성 완료 및 DeliveryCreatedEvent 발행- orderId={}, deliveryId={}", command.orderId(), deliveryId);
     }
 }
