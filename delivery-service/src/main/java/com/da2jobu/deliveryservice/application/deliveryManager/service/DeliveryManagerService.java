@@ -1,8 +1,10 @@
 package com.da2jobu.deliveryservice.application.deliveryManager.service;
 
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.command.CreateDeliveryManagerCommand;
+import com.da2jobu.deliveryservice.application.deliveryManager.dto.command.SearchDeliveryAssignmentCommand;
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.command.SearchDeliveryManagerCommand;
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.command.UpdateDeliveryManagerCommand;
+import com.da2jobu.deliveryservice.application.deliveryManager.dto.result.DeliveryAssignmentResult;
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.result.DeliveryManagerResult;
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.entity.DeliveryManager;
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryManagerId;
@@ -117,6 +119,19 @@ public class DeliveryManagerService {
                 .map(DeliveryManagerResult::from);
     }
 
+    @Transactional(readOnly = true)
+    public Page<DeliveryAssignmentResult> searchDeliveryAssignments(SearchDeliveryAssignmentCommand command) {
+        deliveryManagerDomainService.validateReadPermission(command.requesterRole());
+
+        DeliveryManager deliveryManager = findDeliveryManagerOrThrow(command.deliveryManagerId());
+        deliveryManagerDomainService.validateReadIdentification(deliveryManager, command.requesterId(), command.requesterRole());
+
+        PageRequest pageable = PageRequest.of(command.validatedPage(), command.validatedSize());
+
+        return deliveryAssignmentRepository
+                .findByManagerId(deliveryManager.getDeliveryManagerId(), command.status(), pageable)
+                .map(DeliveryAssignmentResult::from);
+    }
 
     private DeliveryManager findDeliveryManagerOrThrow(UUID deliveryManagerId) {
         return deliveryManagerRepository.findById(DeliveryManagerId.of(deliveryManagerId))

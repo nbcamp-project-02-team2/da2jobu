@@ -7,9 +7,13 @@ import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryAssig
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryManagerId;
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.ManagerIdleDuration;
 import com.da2jobu.deliveryservice.domain.deliveryManager.repository.DeliveryAssignmentRepository;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -60,5 +64,34 @@ public class DeliveryAssignmentRepositoryAdapter implements DeliveryAssignmentRe
         return jpaDeliveryAssignmentRepository.save(assignment);
     }
 
+    @Override
+    public Page<DeliveryAssignment> findByManagerId(DeliveryManagerId deliveryManagerId,
+                                                    DeliveryAssignmentStatus status,
+                                                    Pageable pageable) {
+        QDeliveryAssignment assignment = QDeliveryAssignment.deliveryAssignment;
 
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(assignment.deliveryManagerId.eq(deliveryManagerId));
+        builder.and(assignment.deletedAt.isNull());
+
+        if (status != null) {
+            builder.and(assignment.status.eq(status));
+        }
+
+        List<DeliveryAssignment> content = queryFactory
+                .selectFrom(assignment)
+                .where(builder)
+                .orderBy(assignment.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(assignment.count())
+                .from(assignment)
+                .where(builder)
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total == null ? 0L : total);
+    }
 }

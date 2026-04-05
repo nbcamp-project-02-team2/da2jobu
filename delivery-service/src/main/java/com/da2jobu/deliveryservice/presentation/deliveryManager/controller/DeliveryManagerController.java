@@ -1,13 +1,16 @@
 package com.da2jobu.deliveryservice.presentation.deliveryManager.controller;
 
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.command.CreateDeliveryManagerCommand;
+import com.da2jobu.deliveryservice.application.deliveryManager.dto.command.SearchDeliveryAssignmentCommand;
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.command.SearchDeliveryManagerCommand;
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.command.UpdateDeliveryManagerCommand;
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.result.DeliveryManagerResult;
 import com.da2jobu.deliveryservice.application.deliveryManager.service.DeliveryManagerService;
+import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryAssignmentStatus;
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryManagerType;
 import com.da2jobu.deliveryservice.presentation.deliveryManager.dto.request.CreateDeliveryManagerRequest;
 import com.da2jobu.deliveryservice.presentation.deliveryManager.dto.request.UpdateDeliveryManagerRequest;
+import com.da2jobu.deliveryservice.presentation.deliveryManager.dto.response.DeliveryAssignmentResponse;
 import com.da2jobu.deliveryservice.presentation.deliveryManager.dto.response.DeliveryManagerResponse;
 import common.dto.CommonResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -97,4 +100,21 @@ public class DeliveryManagerController {
         return CommonResponse.ok("배송 담당자 목록 조회 완료", result);
     }
 
+    @GetMapping("/{deliveryManagerId}/assignments")
+    public ResponseEntity<CommonResponse<Page<DeliveryAssignmentResponse>>> searchDeliveryAssignments(
+            @PathVariable UUID deliveryManagerId,
+            @RequestParam(required = false) DeliveryAssignmentStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort,
+            @RequestHeader("X-User-Id") UUID requesterId,
+            @RequestHeader("X-User-Role") String requesterRole
+    ) {
+        SearchDeliveryAssignmentCommand command = new SearchDeliveryAssignmentCommand(
+                deliveryManagerId, status, page, size, sort, requesterId, requesterRole
+        );
+        Page<DeliveryAssignmentResponse> result = deliveryManagerService.searchDeliveryAssignments(command)
+                .map(DeliveryAssignmentResponse::from);
+        return CommonResponse.ok("배정 이력 조회 완료", result);
+    }
 }
