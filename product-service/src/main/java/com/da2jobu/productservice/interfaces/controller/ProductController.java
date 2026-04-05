@@ -139,30 +139,6 @@ public class ProductController {
         return CommonResponse.ok(response);
     }
 
-    /**
-     * 7. 재고 차감 (order-service 내부 호출용).
-     */
-    @PatchMapping("/{productId}/stock")
-    public ResponseEntity<CommonResponse<?>> reduceStock(
-            @PathVariable UUID productId,
-            @RequestParam int quantity) {
-
-        productService.reduceStock(productId, quantity);
-        return CommonResponse.ok("재고가 차감되었습니다.");
-    }
-
-    /**
-     * 8. 재고 복구 (주문 취소 시).
-     */
-    @PatchMapping("/{productId}/stock/restore")
-    public ResponseEntity<CommonResponse<?>> restoreStock(
-            @PathVariable UUID productId,
-            @RequestParam int quantity) {
-
-        productService.restoreStock(productId, quantity);
-        return CommonResponse.ok("재고가 복구되었습니다.");
-    }
-
     /** 페이지 크기 유효성 검증 (10, 30, 50만 허용) */
     private void validatePageSize(int size) {
         if (!ALLOWED_PAGE_SIZES.contains(size)) {

@@ -1,6 +1,8 @@
 package com.da2jobu.productservice.domain.model;
 
 import common.entity.BaseEntity;
+import common.exception.CustomException;
+import common.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
@@ -87,6 +89,12 @@ public class Product extends BaseEntity {
      * 재고 차감.
      */
     public void reduceStock(int quantity) {
+        if (quantity <= 0) {
+            throw new CustomException(ErrorCode.INVALID_STOCK_QUANTITY);
+        }
+        if (this.stockQuantity < quantity) {
+            throw new CustomException(ErrorCode.INSUFFICIENT_STOCK);
+        }
         this.stockQuantity -= quantity;
     }
 
@@ -94,6 +102,9 @@ public class Product extends BaseEntity {
      * 재고 복구 (주문 취소 시).
      */
     public void restoreStock(int quantity) {
+        if (quantity <= 0) {
+            throw new CustomException(ErrorCode.INVALID_STOCK_QUANTITY);
+        }
         this.stockQuantity += quantity;
     }
 
