@@ -18,7 +18,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @SuperBuilder
 @Schema(description = "허브 정보 엔티티")
-public class Hub extends BaseEntity{
+public class Hub extends BaseEntity {
 
     @Id
     @GeneratedValue(generator = "UUID")
@@ -43,13 +43,13 @@ public class Hub extends BaseEntity{
     @Schema(description = "경도 (예: 127.1234)")
     private BigDecimal longitude;
 
-    public static Hub createHub(String hubName, String address, BigDecimal latitude, BigDecimal longitude) {
+    public static Hub createHub(String hubName, String address, BigDecimal latitude, BigDecimal longitude, String createdBy) {
         return (Hub) Hub.builder()
                 .hubName(hubName)
                 .address(address)
                 .latitude(latitude)
                 .longitude(longitude)
-                .createdBy("master")
+                .createdBy(createdBy)
                 .createdAt(LocalDateTime.now())
                 .build();
     }
