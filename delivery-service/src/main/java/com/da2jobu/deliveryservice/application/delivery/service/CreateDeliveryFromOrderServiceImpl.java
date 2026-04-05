@@ -113,7 +113,7 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
                 .destinationType(RouteLocationType.HUB)
                 .expectedDistanceKm(hubToHubExpectedDistance)
                 .expectedDurationMin(hubToHubExpectedDuration)
-                .status(DeliveryRouteStatus.WAITING)    // 수정 예정
+                .status(DeliveryRouteStatus.HUB_WAITING)    // 수정 예정
                 .deliveryManagerId(hubDeliveryManagerId)
                 .realDistanceKm(null)
                 .realDurationMin(null)
@@ -129,7 +129,7 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
                 .destinationType(RouteLocationType.COMPANY)
                 .expectedDistanceKm(hubToCompanyExpectedDistance)
                 .expectedDurationMin(hubToCompanyExpectedDuration)
-                .status(DeliveryRouteStatus.WAITING)    // 수정 예정
+                .status(DeliveryRouteStatus.HUB_WAITING)    // 수정 예정
                 .deliveryManagerId(companyDeliveryManagerId)
                 .realDistanceKm(null)
                 .realDurationMin(null)
