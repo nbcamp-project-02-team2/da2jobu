@@ -1,7 +1,6 @@
-package com.da2jobu.deliveryservice.infrastructure.client;
+package com.da2jobu.deliveryservice.infrastructure.delivery.client;
 
-import com.da2jobu.deliveryservice.infrastructure.dto.UserResponse;
-import com.da2jobu.deliveryservice.infrastructure.dto.UserInfoDto;
+import com.da2jobu.deliveryservice.infrastructure.delivery.dto.UserInfoDto;
 import common.dto.CommonResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +15,6 @@ public interface UserServiceClient {
     @GetMapping("/api/internal/users/by-username")
     UserInfoDto getUserByUsername(@RequestParam("username") String username);
 
-    @GetMapping("/api/users/{userId}")
-    CommonResponse<UserResponse> getUser(@PathVariable("userId") UUID userId);
+    @GetMapping("/api/internal/users/by-userId/{userId}")
+    com.da2jobu.deliveryservice.infrastructure.dto.UserInfoByIdDto getUserByUserId(@PathVariable UUID userId);
 }
