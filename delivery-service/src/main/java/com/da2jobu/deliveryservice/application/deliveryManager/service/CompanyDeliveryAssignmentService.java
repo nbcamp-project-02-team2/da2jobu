@@ -25,6 +25,7 @@ import common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,6 +48,7 @@ public class CompanyDeliveryAssignmentService {
     private final DeliveryRouteRecordRepository deliveryRouteRecordRepository;
 
 
+    @Transactional
     public void assignDailyCompanyDeliveries(UUID hubId) {
 
         List<TodayCompanyDeliveryRouteResponseDto> todayDeliveries = getTodayCompanyDeliveryRoutesService.getTodayCompanyDeliveryRoutes(hubId);
@@ -67,7 +69,7 @@ public class CompanyDeliveryAssignmentService {
         List<CompanyDeliveryPoint> companyDeliveryRoute = getCompanyDeliveryRoute(todayDeliveries);
 
         // OR-Tools VRPTW 솔버 (클러스터링 + 경로 + 시간 윈도우 통합)
-        LocalDateTime batchStartTime = LocalDate.now().atTime(6, 0);
+        LocalDateTime batchStartTime = LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).atTime(6, 0);
         VrptwInput input = VrptwInput.of(companyDeliveryRoute, availableManagers.size(), batchStartTime);
         VrptwResult result = routeOptimizationService.solve(input);
 
