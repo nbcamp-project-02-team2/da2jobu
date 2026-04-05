@@ -10,6 +10,7 @@ import com.delivery.hubpath.infrastructure.client.PageResponse;
 import com.delivery.hubpath.infrastructure.config.RestPage;
 import com.delivery.hubpath.interfaces.dto.request.SearchHubPathRequest;
 import com.delivery.hubpath.interfaces.dto.response.HubPathResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import common.client.KakaoAddressService;
 import common.dto.CommonResponse;
 import jakarta.persistence.EntityNotFoundException;
@@ -38,14 +39,16 @@ public class HubPathApiService {
     // 허브 간의 경로 저장
     @CacheEvict(cacheNames = "hubPages", allEntries = true)
     @Transactional
-    public HubPathResponse createHubPath(CreateHubPathCommand command) {
+    public HubPathResponse createHubPath(CreateHubPathCommand command, String userRole, String username) {
+        validateMasterRole(userRole);
 
-        HubResponse departHub = fetchHubByName(command.departHubName());
-        HubResponse arriveHub = fetchHubByName(command.arriveHubName());
+        HubResponse departHub = fetchHubById(command.departHubId());
+        HubResponse arriveHub = fetchHubById(command.arriveHubId());
 
         List<HubResponse> allHubs = fetchAllHubs();
 
         HubPath hubPath = HubPath.createPath(departHub, arriveHub, allHubs, kakaoAddressService);
+        hubPath.setCreatedBy(username);
         HubPath savedPath = hubPathRepository.save(hubPath);
 
         return HubPathResponse.from(savedPath);
@@ -82,24 +85,26 @@ public class HubPathApiService {
             @CacheEvict(cacheNames = "hubPathPages", allEntries = true)
     })
     @Transactional
-    public HubPathResponse updateHubPath(UpdateHubPathCommand command) {
+    public HubPathResponse updateHubPath(UpdateHubPathCommand command, String userRole, String username) {
+        validateMasterRole(userRole);
 
         HubPath hubPath = hubPathRepository.findById(command.hub_path_id())
                 .orElseThrow(() -> new EntityNotFoundException("해당 경로를 찾을 수 없습니다. ID: " + command.hub_path_id()));
 
-        String finalDepartName = (command.departHubName() != null) ? command.departHubName() : hubPath.getDepartHubName();
-        String finalArriveName = (command.arriveHubName() != null) ? command.arriveHubName() : hubPath.getArriveHubName();
+        UUID finalDepartId = (command.departHubId() != null) ? command.departHubId() : hubPath.getDepartHubId();
+        UUID finalArriveId = (command.arriveHubId() != null) ? command.arriveHubId() : hubPath.getArriveHubId();
 
-        if (finalDepartName.equals(hubPath.getDepartHubName()) && finalArriveName.equals(hubPath.getArriveHubName())) {
-            return HubPathResponse.detailFrom(hubPath);
-        }
+//        if (finalDepartName.equals(hubPath.getDepartHubName()) && finalArriveName.equals(hubPath.getArriveHubName())) {
+//            return HubPathResponse.detailFrom(hubPath);
+//        }
 
-        HubResponse departHub = fetchHubByName(finalDepartName);
-        HubResponse arriveHub = fetchHubByName(finalArriveName);
+        HubResponse departHub = fetchHubById(finalDepartId);
+        HubResponse arriveHub = fetchHubById(finalArriveId);
 
         List<HubResponse> allHubs = fetchAllHubs();
 
         hubPath.updatePath(departHub, arriveHub, allHubs, kakaoAddressService);
+        hubPath.setUpdatedBy(username);
 
         return HubPathResponse.detailFrom(hubPath);
     }
@@ -110,31 +115,49 @@ public class HubPathApiService {
             @CacheEvict(cacheNames = "hubPathPages", allEntries = true)
     })
     @Transactional
-    public void deleteHubPath(UUID hubPathId) {
+    public void deleteHubPath(UUID hubPathId, String userRole, String username) {
+        validateMasterRole(userRole);
+
         HubPath hubPath = hubPathRepository.findById(hubPathId)
                 .orElseThrow(() -> new EntityNotFoundException("삭제할 경로 정보를 찾을 수 없습니다. ID: " + hubPathId));
         if (hubPath.isDeleted()) {
             throw new IllegalStateException("이미 삭제된 경로입니다.");
         }
 
-        hubPath.softDelete("master"); // TODO: 나중에 로그인한 유저 ID로 교체
+        hubPath.softDelete(username);
     }
 
-    private HubResponse fetchHubByName(String hubName) {
-        CommonResponse<PageResponse<HubResponse>> response = hubClient.getHubs(hubName, null, 10, 0);
+    private void validateMasterRole(String userRole) {
+        if (!"MASTER".equals(userRole)) {
+            throw new RuntimeException("MASTER 권한만 접근 가능합니다.");
+        }
+    }
 
-        if (response == null || response.getData() == null || response.getData().getContent().isEmpty()) {
-            throw new IllegalArgumentException("해당 이름의 허브를 찾을 수 없습니다: " + hubName);
+    private HubResponse fetchHubById(UUID hubId) {
+        CommonResponse<PageResponse<HubResponse>> response = hubClient.getHubs(hubId, 1, 0);
+
+        if (response == null || response.getData() == null) {
+            throw new IllegalArgumentException("해당 ID의 허브를 찾을 수 없습니다: " + hubId);
         }
 
-        List<HubResponse> content = response.getData().getContent();
+        Object data = response.getData();
+        PageResponse<HubResponse> pageData;
 
-        return content.stream()
-                .filter(hub -> hub.getHub_name().equals(hubName))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "유사한 이름의 허브는 검색되었으나, 정확히 일치하는 '" + hubName + "' 허브가 존재하지 않습니다."
-                ));
+        if (data instanceof java.util.Map) {
+            ObjectMapper objectMapper = new ObjectMapper()
+                    .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+                    .registerModule(new com.fasterxml.jackson.datatype.jdk8.Jdk8Module());
+
+            pageData = objectMapper.convertValue(data, new com.fasterxml.jackson.core.type.TypeReference<PageResponse<HubResponse>>() {});
+        } else {
+            pageData = (PageResponse<HubResponse>) data;
+        }
+
+        if (pageData.getContent() == null || pageData.getContent().isEmpty()) {
+            throw new IllegalArgumentException("해당 ID의 허브를 찾을 수 없습니다: " + hubId);
+        }
+
+        return pageData.getContent().get(0);
     }
 
     private List<HubResponse> fetchAllHubs() {

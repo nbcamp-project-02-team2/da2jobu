@@ -4,8 +4,7 @@ import java.util.UUID;
 
 public record UpdateHubPathRequest(
         UUID hub_path_id,
-        String departHubName,
-        String arriveHubName
-
+        UUID departHubId,
+        UUID arriveHubId
 )
 {}

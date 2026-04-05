@@ -14,7 +14,7 @@ public record HubPathResponse(
         String departHubName,
         UUID arriveHubId,
         String arriveHubName,
-        UUID middleHubId,
+        String middleHubId,
         String middleHubName,
         BigDecimal firstDistance,
         Integer firstDuration,
