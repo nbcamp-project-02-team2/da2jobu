@@ -11,6 +11,7 @@ import com.da2jobu.deliveryservice.infrastructure.delivery.client.CompanyService
 import com.da2jobu.deliveryservice.infrastructure.delivery.client.UserServiceClient;
 import com.da2jobu.deliveryservice.infrastructure.delivery.dto.CompanyInfoDto;
 import com.da2jobu.deliveryservice.infrastructure.delivery.dto.UserInfoDto;
+import com.da2jobu.deliveryservice.infrastructure.delivery.messaging.DeliveryEventProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,6 +46,9 @@ class CreateDeliveryFromOrderServiceImplTest {
     @Mock
     private CompanyServiceClient companyServiceClient;
 
+    @Mock
+    private DeliveryEventProducer deliveryEventProducer;
+
     @InjectMocks
     private CreateDeliveryFromOrderServiceImpl createDeliveryFromOrderService;
 
@@ -62,13 +67,15 @@ class CreateDeliveryFromOrderServiceImplTest {
         UUID supplierHubId = UUID.randomUUID();
         UUID receiverHubId = UUID.randomUUID();
         UUID deliveryId = UUID.randomUUID();
+        LocalDateTime desiredDeliveryAt = LocalDateTime.of(2026, 04, 05, 15, 0);
 
         CreateDeliveryFromOrderCommand command = new CreateDeliveryFromOrderCommand(
                 orderId,
                 supplierId,
                 receiverId,
                 "문 앞에 놔주세요",
-                "receiver_manager"
+                "receiver_manager",
+                desiredDeliveryAt
         );
 
         UserInfoDto userInfoDto = new UserInfoDto(
@@ -151,13 +158,15 @@ class CreateDeliveryFromOrderServiceImplTest {
         UUID orderId = UUID.randomUUID();
         UUID supplierId = UUID.randomUUID();
         UUID receiverId = UUID.randomUUID();
+        LocalDateTime desiredDeliveryAt = LocalDateTime.of(2026, 04, 05, 15, 0);
 
         CreateDeliveryFromOrderCommand command = new CreateDeliveryFromOrderCommand(
                 orderId,
                 supplierId,
                 receiverId,
                 "요청사항",
-                "receiver_manager"
+                "receiver_manager",
+                desiredDeliveryAt
         );
 
         when(userServiceClient.getUserByUsername("receiver_manager"))

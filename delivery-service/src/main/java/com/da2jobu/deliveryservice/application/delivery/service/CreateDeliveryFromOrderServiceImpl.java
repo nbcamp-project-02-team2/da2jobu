@@ -43,11 +43,12 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
     @Override
     public void execute(CreateDeliveryFromOrderCommand command) {
         log.info(
-                "주문 기반 배송 생성 시작 - orderId={}, supplierId={}, receiverId={}, createdBy={}",
+                "주문 기반 배송 생성 시작 - orderId={}, supplierId={}, receiverId={}, createdBy={}, desiredDeliveryAt={}",
                 command.orderId(),
                 command.supplierId(),
                 command.receiverId(),
-                command.createdBy()
+                command.createdBy(),
+                command.desiredDeliveryAt()
         );
 
         if (deliveryRepository.existsByOrderIdAndDeletedAtIsNull(command.orderId())) {
@@ -72,7 +73,7 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
         UUID companyDeliveryManagerId = null;
         UUID hubDeliveryManagerId = null;
 
-        // 경로 고정, 추후 허브 경로 조회 로직으로 교체 예정
+        // TODO: 경로 고정, 추후 허브 경로 조회 로직으로 교체 예정
         BigDecimal hubToHubExpectedDistance = BigDecimal.valueOf(10.00);
         int hubToHubExpectedDuration = 60;
 
