@@ -36,7 +36,7 @@ public record HubPathResponse(
                 entity.getDepartHubName(),
                 entity.getArriveHubId(),
                 entity.getArriveHubName(),
-                entity.getMiddleHubName(),
+                entity.getMiddleHubId(),
                 entity.getMiddleHubName(),
                 null, null, null, null,
                 entity.getDistance(),
