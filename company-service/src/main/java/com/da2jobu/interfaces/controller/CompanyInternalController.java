@@ -18,7 +18,7 @@ public class CompanyInternalController {
 
     private final CompanyService companyService;
 
-    @GetMapping
+    @PostMapping
     public List<CompanyResponse> getCompanies(
             @RequestBody List<UUID> companyIds
     ) {

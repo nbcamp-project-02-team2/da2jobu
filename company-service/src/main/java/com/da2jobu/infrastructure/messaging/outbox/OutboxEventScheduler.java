@@ -17,7 +17,7 @@ public class OutboxEventScheduler {
     private static final int MAX_RETRY = 3;
 
     private final OutboxEventRepository outboxEventRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Scheduled(fixedDelay = 10000)
     @Transactional
