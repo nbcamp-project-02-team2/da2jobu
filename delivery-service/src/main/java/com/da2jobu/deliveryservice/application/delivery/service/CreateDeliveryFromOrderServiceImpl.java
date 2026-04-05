@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -142,8 +144,26 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
                 command.orderId(),
                 deliveryId
         );
-        deliveryEventProducer.publishDeliveryCreated(event);
 
-        log.info("주문 기반 배송 생성 완료 및 DeliveryCreatedEvent 발행- orderId={}, deliveryId={}", command.orderId(), deliveryId);
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    deliveryEventProducer.publishDeliveryCreated(event);
+                    log.info(
+                            "주문 기반 배송 생성 완료 및 DeliveryCreatedEvent 발행 - orderId={}, deliveryId={}",
+                            command.orderId(),
+                            deliveryId
+                    );
+                }
+            });
+        } else {
+            deliveryEventProducer.publishDeliveryCreated(event);
+            log.info(
+                    "주문 기반 배송 생성 완료 및 DeliveryCreatedEvent 발행 - orderId={}, deliveryId={}",
+                    command.orderId(),
+                    deliveryId
+            );
+        }
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,11 +21,13 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class GetTodayCompanyDeliveryRoutesServiceImpl implements GetTodayCompanyDeliveryRoutesService {
 
+    private static final ZoneId KOREA_ZONE_ID = ZoneId.of("Asia/Seoul");
+
     private final DeliveryRouteRecordRepository deliveryRouteRecordRepository;
 
     @Override
     public List<TodayCompanyDeliveryRouteResponseDto> getTodayCompanyDeliveryRoutes(UUID hubId) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(KOREA_ZONE_ID);
         LocalDateTime todayStart = today.atStartOfDay();
         LocalDateTime tomorrowStart = today.plusDays(1).atStartOfDay();
 
