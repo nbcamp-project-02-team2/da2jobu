@@ -2,7 +2,6 @@ package com.da2jobu.infrastructure.client;
 
 import com.da2jobu.application.client.UserClient;
 import com.da2jobu.infrastructure.client.dto.UserResponse;
-import common.dto.CommonResponse;
 import common.exception.CustomException;
 import common.exception.ErrorCode;
 import feign.FeignException;
@@ -26,12 +25,8 @@ public class UserClientImpl implements UserClient {
     @CircuitBreaker(name = "userService", fallbackMethod = "userServiceFallback")
     public UserInfo getUserInfo(UUID userId) {
         try {
-            /**
-             * todo : 유저 내부 api 요청 (변경예정)
-             */
-            CommonResponse<UserResponse> response = userFeignClient.getUserInfo(userId, "MASTER");
-            UserResponse userResponse = response.getData();
-            return new UserInfo(userResponse.hubId(), userResponse.companyId());
+            UserResponse response = userFeignClient.getUserByUserId(userId);
+            return new UserInfo(response.hubId(), response.companyId());
         } catch (FeignException.NotFound e) {
             return null;
         }

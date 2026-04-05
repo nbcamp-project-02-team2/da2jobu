@@ -12,12 +12,6 @@ import java.util.UUID;
 @FeignClient(name = "user-service")
 public interface UserFeignClient {
 
-    /**
-     * todo: 유저쪽 인터널 api 추가 요청 (변경예정)
-     */
-    @GetMapping("/api/users/{userId}")
-    CommonResponse<UserResponse> getUserInfo(
-            @PathVariable("userId") UUID userId,
-            @RequestHeader("X-User-Role") String role
-    );
+    @GetMapping("/api/internal/users/by-userId/{userId}")
+    UserResponse getUserByUserId(@PathVariable UUID userId);
 }
