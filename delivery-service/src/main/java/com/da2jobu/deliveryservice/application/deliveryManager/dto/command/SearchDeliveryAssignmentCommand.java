@@ -10,7 +10,6 @@ public record SearchDeliveryAssignmentCommand(
         DeliveryAssignmentStatus status,
         int page,
         int size,
-        String sort,
         UUID requesterId,
         String requesterRole
 ) {

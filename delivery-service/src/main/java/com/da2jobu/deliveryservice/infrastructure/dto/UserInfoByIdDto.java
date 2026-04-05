@@ -7,6 +7,7 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record UserInfoByIdDto(
         UUID userId,
-        String userRole
+        String userRole,
+        UUID hubId
 ) {
 }

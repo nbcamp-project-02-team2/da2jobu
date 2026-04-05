@@ -2,12 +2,16 @@ package com.da2jobu.deliveryservice.application.deliveryManager.service;
 
 
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.result.HubDeliveryAssignmentResult;
+import com.da2jobu.deliveryservice.domain.delivery.entity.Delivery;
+import com.da2jobu.deliveryservice.domain.delivery.repository.DeliveryRepository;
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.entity.DeliveryAssignment;
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.entity.DeliveryManager;
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.*;
 import com.da2jobu.deliveryservice.domain.deliveryManager.repository.DeliveryAssignmentRepository;
 import com.da2jobu.deliveryservice.domain.deliveryManager.repository.DeliveryManagerRepository;
 import com.da2jobu.deliveryservice.domain.deliveryManager.service.DeliveryAssignmentDomainService;
+import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.entity.DeliveryRouteRecord;
+import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.repository.DeliveryRouteRecordRepository;
 import common.exception.CustomException;
 import common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -26,13 +30,15 @@ public class HubDeliveryAssignmentService {
     private final DeliveryManagerRepository deliveryManagerRepository;
     private final DeliveryAssignmentRepository deliveryAssignmentRepository;
     private final DeliveryAssignmentDomainService deliveryAssignmentDomainService;
+    private final DeliveryRepository deliveryRepository;
+    private final DeliveryRouteRecordRepository deliveryRouteRecordRepository;
 
     /**
      * 허브 배송 담당자
      * 대기시간, 순번 기준 라운드로빈 방식
      * 배송 시작 지점까지 이동하는 것에 대한 시공간적 제약은 무시 (발제문 참고)
      */
-    public HubDeliveryAssignmentResult assignHubDelivery(DeliveryId deliveryId, DeliveryRouteRecordId deliveryRouteRecordId, UUID startHubId) {
+    public void assignHubDelivery(DeliveryId deliveryId, DeliveryRouteRecordId deliveryRouteRecordId, UUID startHubId) {
         List<DeliveryManager> availableHubDeliveryManagers = deliveryManagerRepository.findHubDeliveryManagersWithNoAssignment();
         if (availableHubDeliveryManagers.isEmpty()) {
             throw new CustomException(ErrorCode.DELIVERY_MANAGER_NOT_FOUND);
@@ -47,7 +53,17 @@ public class HubDeliveryAssignmentService {
                 HubId.of(startHubId)
         );
         deliveryAssignmentRepository.save(assignment);
-        return HubDeliveryAssignmentResult.from(assignment, manager);
+
+        // 배정된 담당자로 delivery, deliveryRouteRecord 업데이트
+        UUID managerId = manager.getDeliveryManagerId().getDeliveryManagerId();
+        Delivery delivery = deliveryRepository.findByDeliveryIdAndDeletedAtIsNull(deliveryId.getDeliveryId())
+                .orElseThrow(() -> new CustomException(ErrorCode.DELIVERY_NOT_FOUND));
+        delivery.updateManagerId(managerId);
+
+        DeliveryRouteRecord routeRecord = deliveryRouteRecordRepository
+                .findByDeliveryRouteRecordIdAndDeletedAtIsNull(deliveryRouteRecordId.getDeliveryRouteRecordId())
+                .orElseThrow(() -> new CustomException(ErrorCode.DELIVERY_ROUTE_RECORD_NOT_FOUND));
+        routeRecord.updateManagerId(managerId);
     }
 
     //배송 완료시 배정 상태 변경

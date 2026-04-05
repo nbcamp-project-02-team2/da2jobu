@@ -5,6 +5,8 @@ import com.da2jobu.deliveryservice.application.deliveryManager.dto.VehicleRoute;
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.VrptwInput;
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.VrptwResult;
 import com.da2jobu.deliveryservice.application.deliveryManager.dto.result.CompanyDeliveryAssignmentResult;
+import com.da2jobu.deliveryservice.domain.delivery.entity.Delivery;
+import com.da2jobu.deliveryservice.domain.delivery.repository.DeliveryRepository;
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.entity.DeliveryAssignment;
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.entity.DeliveryManager;
 import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryId;
@@ -14,6 +16,7 @@ import com.da2jobu.deliveryservice.domain.deliveryManager.repository.DeliveryAss
 import com.da2jobu.deliveryservice.domain.deliveryManager.repository.DeliveryManagerRepository;
 import com.da2jobu.deliveryservice.domain.deliveryManager.service.DeliveryAssignmentDomainService;
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.entity.DeliveryRouteRecord;
+import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.repository.DeliveryRouteRecordRepository;
 import com.da2jobu.deliveryservice.infrastructure.client.CompanyServiceClient;
 import com.da2jobu.deliveryservice.infrastructure.dto.CompanyInfoDto;
 import common.exception.CustomException;
@@ -38,16 +41,18 @@ public class CompanyDeliveryAssignmentService {
     private final DeliveryAssignmentRepository deliveryAssignmentRepository;
     private final DeliveryAssignmentDomainService deliveryAssignmentDomainService;
     private final CompanyServiceClient companyServiceClient;
+    private final DeliveryRepository deliveryRepository;
+    private final DeliveryRouteRecordRepository deliveryRouteRecordRepository;
 
 
-    public CompanyDeliveryAssignmentResult assignDailyCompanyDeliveries(UUID hubId) {
+    public void assignDailyCompanyDeliveries(UUID hubId) {
         /**
          * todo : 당일 배송 예정 건 일괄 조회 : todayDeliveries 임시
          */
         List<DeliveryRouteRecord> todayDeliveries = new ArrayList<>();
         // 오늘 배송 건이 없으면
         if (todayDeliveries.isEmpty()) {
-            return CompanyDeliveryAssignmentResult.of(hubId, 0, 0, 0);
+            return;
         }
 
         // 해당 허브 소속 가용 업체배송 매니저 조회
@@ -77,6 +82,10 @@ public class CompanyDeliveryAssignmentService {
                     .toList();
             input = VrptwInput.of(relaxedPoints, availableManagers.size(), batchStartTime);
             result = routeOptimizationService.solve(input);
+            if (!result.feasible()) {
+                log.error("VRPTW 제약 완화 후에도 해를 찾지 못함 - hubId={}", hubId);
+                throw new CustomException(ErrorCode.ROUTE_OPTIMIZATION_FAILED);
+            }
         }
 
         // 매니저 배정 (대기시간 긴 매니저 → 이동거리 긴 경로 우선 배정)
@@ -97,6 +106,19 @@ public class CompanyDeliveryAssignmentService {
                         HubId.of(hubId)
                 );
                 deliveryAssignmentRepository.save(assignment);
+
+                // 배정된 담당자로 delivery, deliveryRouteRecord 업데이트
+                UUID managerId = manager.getDeliveryManagerId().getDeliveryManagerId();
+
+                Delivery delivery = deliveryRepository.findByDeliveryIdAndDeletedAtIsNull(point.deliveryId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.DELIVERY_NOT_FOUND));
+                delivery.updateManagerId(managerId);
+
+                DeliveryRouteRecord routeRecord = deliveryRouteRecordRepository
+                        .findByDeliveryRouteRecordIdAndDeletedAtIsNull(point.deliveryRouteRecordId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.DELIVERY_ROUTE_RECORD_NOT_FOUND));
+                routeRecord.updateManagerId(managerId);
+
                 assignedCount++;
             }
         }
@@ -104,12 +126,6 @@ public class CompanyDeliveryAssignmentService {
                 hubId, assignedCount,
                 Math.min(availableManagers.size(), routes.size()),
                 routes.size());
-
-        return new CompanyDeliveryAssignmentResult(
-                hubId, assignedCount,
-                Math.min(availableManagers.size(), routes.size()),
-                routes.size()
-        );
     }
 
     private List<CompanyDeliveryPoint> getCompanyDeliveryRoute(List<DeliveryRouteRecord> todayDeliveries) {

@@ -45,6 +45,7 @@ public class DeliveryManagerService {
     public DeliveryManagerResult createDeliveryManager(CreateDeliveryManagerCommand command) {
         validateUserIsDeliveryManager(command.userId());
         validateHubExists(command.hubId());
+        validateHubAccess(command.requesterId(), command.requesterRole(), command.type(), HubId.of(command.hubId()));
 
         UserId userId = UserId.of(command.userId());
         HubId hubId = HubId.of(command.hubId());
@@ -73,6 +74,7 @@ public class DeliveryManagerService {
     @Transactional
     public DeliveryManagerResult updateDeliveryManagers(UpdateDeliveryManagerCommand command) {
         validateHubExists(command.hubId());
+        validateHubAccess(command.requesterId(), command.requesterRole(), command.type(), HubId.of(command.hubId()));
         DeliveryManager deliveryManager = findDeliveryManagerOrThrow(command.deliveryManagerId());
         HubId hubId = HubId.of(command.hubId());
         DeliveryManagerType type = command.type();
@@ -93,8 +95,9 @@ public class DeliveryManagerService {
     }
 
     @Transactional
-    public void deleteDeliveryManager(UUID deliveryManagerId, UUID requesterId) {
+    public void deleteDeliveryManager(UUID deliveryManagerId, UUID requesterId, String requesterRole) {
         DeliveryManager deliveryManager = findDeliveryManagerOrThrow(deliveryManagerId);
+        validateHubAccess(requesterId, requesterRole, deliveryManager.getType(), deliveryManager.getHubId());
         //배송 중, 배정 완료인 매니저는 삭제 불가
         if (deliveryAssignmentRepository.hasActiveDelivery(DeliveryManagerId.of(deliveryManagerId))) {
             throw new CustomException(ErrorCode.DELIVERY_MANAGER_ACTIVE);
@@ -151,6 +154,19 @@ public class DeliveryManagerService {
             throw new CustomException(ErrorCode.HUB_NOT_FOUND);
         } catch (FeignException e) {
             throw new CustomException(ErrorCode.HUB_SERVICE_ERROR);
+        }
+    }
+
+    private void validateHubAccess(UUID requesterId, String requesterRole, DeliveryManagerType type, HubId targetHubId) {
+        if ("MASTER".equals(requesterRole) || DeliveryManager.isHubDeliveryManager(type, targetHubId)) {
+            return;
+        }
+        UserInfoByIdDto requester = userServiceClient.getUserByUserId(requesterId);
+        if (requester == null || requester.hubId() == null) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+        if (!requester.hubId().equals(targetHubId.getHubId())) {
+            throw new CustomException(ErrorCode.DELIVERY_MANAGER_HUB_MISMATCH);
         }
     }
 }

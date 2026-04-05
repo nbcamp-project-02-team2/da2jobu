@@ -141,14 +141,12 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
         deliveryRouteRecordRepository.saveAll(List.of(route0, route1));
 
         //허브 배송 담당자 배정
-        HubDeliveryAssignmentResult deliveryAssignmentResult = hubDeliveryAssignmentService.assignHubDelivery(
+        hubDeliveryAssignmentService.assignHubDelivery(
                 DeliveryId.of(deliveryId),
                 DeliveryRouteRecordId.of(route0.getDeliveryRouteRecordId()),
                 originHubId
         );
-        /**
-         * 배송 측에서 배송담당자 id 업데이트
-         */
+
         log.info("주문 기반 배송 생성 완료 - orderId={}, deliveryId={}", command.orderId(), deliveryId);
     }
 }

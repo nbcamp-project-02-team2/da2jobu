@@ -35,7 +35,7 @@ public class DeliveryAssignmentRepositoryAdapter implements DeliveryAssignmentRe
     public boolean hasActiveDelivery(DeliveryManagerId deliveryManagerId) {
         return jpaDeliveryAssignmentRepository.existsByDeliveryManagerIdAndStatusIn(
                 deliveryManagerId,
-                List.of(DeliveryAssignmentStatus.ASSIGNED, DeliveryAssignmentStatus.PROGRESS)
+                List.of(DeliveryAssignmentStatus.ASSIGNED)
         );
     }
     @Override
@@ -48,7 +48,7 @@ public class DeliveryAssignmentRepositoryAdapter implements DeliveryAssignmentRe
                 .from(deliveryAssignment)
                 .where(
                         deliveryAssignment.deliveryManagerId.in(managerIds),
-                        deliveryAssignment.status.in(DeliveryAssignmentStatus.COMPLETED, DeliveryAssignmentStatus.CANCELLED)
+                        deliveryAssignment.status.in(DeliveryAssignmentStatus.COMPLETED)
                 )
                 .groupBy(deliveryAssignment.deliveryManagerId)
                 .fetch();

@@ -81,9 +81,10 @@ public class DeliveryManagerController {
     @RequireRoles({"MASTER", "HUB_MANAGER"})
     public ResponseEntity<CommonResponse<?>> deleteDeliveryManager(
             @PathVariable UUID deliveryManagerId,
-            @RequestHeader("X-User-Id") UUID requesterId
+            @RequestHeader("X-User-Id") UUID requesterId,
+            @RequestHeader("X-User-Role") String requesterRole
     ) {
-        deliveryManagerService.deleteDeliveryManager(deliveryManagerId, requesterId);
+        deliveryManagerService.deleteDeliveryManager(deliveryManagerId, requesterId,requesterRole);
         return CommonResponse.noContent();
     }
 
@@ -112,12 +113,11 @@ public class DeliveryManagerController {
             @RequestParam(required = false) DeliveryAssignmentStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt,desc") String sort,
             @RequestHeader("X-User-Id") UUID requesterId,
             @RequestHeader("X-User-Role") String requesterRole
     ) {
         SearchDeliveryAssignmentCommand command = new SearchDeliveryAssignmentCommand(
-                deliveryManagerId, status, page, size, sort, requesterId, requesterRole
+                deliveryManagerId, status, page, size, requesterId, requesterRole
         );
         Page<DeliveryAssignmentResponse> result = deliveryManagerService.searchDeliveryAssignments(command)
                 .map(DeliveryAssignmentResponse::from);

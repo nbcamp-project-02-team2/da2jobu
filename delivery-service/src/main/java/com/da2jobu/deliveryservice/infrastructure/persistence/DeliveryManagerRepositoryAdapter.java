@@ -8,6 +8,7 @@ import com.da2jobu.deliveryservice.domain.deliveryManager.repository.DeliveryMan
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -114,6 +115,7 @@ public class DeliveryManagerRepositoryAdapter implements DeliveryManagerReposito
                                 .notExists()
                 )
                 .orderBy(qDeliveryManager.seq.asc())
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
                 .fetch();
     }
 
@@ -133,7 +135,7 @@ public class DeliveryManagerRepositoryAdapter implements DeliveryManagerReposito
                                 .from(assignment)
                                 .where(
                                         assignment.deliveryManagerId.eq(manager.deliveryManagerId),
-                                        assignment.status.in(DeliveryAssignmentStatus.ASSIGNED, DeliveryAssignmentStatus.PROGRESS)
+                                        assignment.status.eq(DeliveryAssignmentStatus.ASSIGNED)
                                 )
                                 .notExists()
                 )

@@ -28,7 +28,7 @@ public class DeliveryAssignment extends BaseEntity {
     private DeliveryId deliveryId;
 
     @Embedded
-    @AttributeOverride(name = "deliveryRouteRecordId", column = @Column(name = "delivery_route_record_id"))
+    @AttributeOverride(name = "deliveryRouteRecordId", column = @Column(name = "delivery_route_record_id", nullable = false))
     private DeliveryRouteRecordId deliveryRouteRecordId;
 
     @Embedded

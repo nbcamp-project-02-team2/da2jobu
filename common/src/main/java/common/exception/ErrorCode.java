@@ -78,7 +78,8 @@ public enum ErrorCode {
     DELIVERY_MANAGER_ACTIVE(HttpStatus.CONFLICT, "DELIVERY_MANAGER_ACTIVE", "현재 배정되어 있거나 배송 중인 담당자는 삭제할 수 없습니다."),
     DELIVERY_ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "DELIVERY_ASSIGNMENT_NOT_FOUND", "존재하지 않는 배송 배정입니다."),
     NO_AVAILABLE_COMPANY_DELIVERY_MANAGER(HttpStatus.CONFLICT, "NO_AVAILABLE_COMPANY_DELIVERY_MANAGER", "배정 가능한 업체 배송 담당자가 없습니다."),
-    COMPANY_SERVICE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMPANY_SERVICE_ERROR", "업체 서비스 호출 중 오류가 발생했습니다.");
+    ROUTE_OPTIMIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ROUTE_OPTIMIZATION_FAILED", "경로 최적화에 실패했습니다. 제약 완화 후에도 해를 찾지 못했습니다."),
+    DELIVERY_MANAGER_HUB_MISMATCH(HttpStatus.FORBIDDEN, "DELIVERY_MANAGER_HUB_MISMATCH", "담당 허브의 배송 담당자만 관리할 수 있습니다.");
 
     private final HttpStatus status;
     private final String code;
