@@ -15,7 +15,7 @@ public record DeliverySummaryResponseDto(
         @Schema(description = "주문 ID", example = "22222222-2222-2222-2222-222222222222")
         UUID orderId,
 
-        @Schema(description = "배송 상태", example = "READY")
+        @Schema(description = "배송 상태", example = "HUB_WAITING")
         DeliveryStatus status,
 
         @Schema(description = "출발 허브 ID", example = "33333333-3333-3333-3333-333333333333")
@@ -27,7 +27,7 @@ public record DeliverySummaryResponseDto(
         @Schema(description = "배송지 주소", example = "서울특별시 강남구 테헤란로 123")
         String deliveryAddress,
 
-        @Schema(description = "수령인 이름", example = "박성준")
+        @Schema(description = "수령인 이름", example = "홍길동")
         String receiverName,
 
         @Schema(description = "업체 배송 담당자 ID", example = "55555555-5555-5555-5555-555555555555", nullable = true)

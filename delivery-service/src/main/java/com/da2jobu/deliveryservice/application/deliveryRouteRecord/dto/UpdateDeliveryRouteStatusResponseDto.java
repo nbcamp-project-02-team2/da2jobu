@@ -11,7 +11,7 @@ public record UpdateDeliveryRouteStatusResponseDto(
         @Schema(description = "경로 기록 ID", example = "11111111-1111-1111-1111-111111111111")
         UUID routeRecordId,
 
-        @Schema(description = "변경된 배송 경로 상태", example = "COMPLETED")
+        @Schema(description = "변경된 배송 경로 상태", example = "DELIVERED")
         DeliveryRouteStatus status
 ) {
     public static UpdateDeliveryRouteStatusResponseDto from(DeliveryRouteRecord record) {

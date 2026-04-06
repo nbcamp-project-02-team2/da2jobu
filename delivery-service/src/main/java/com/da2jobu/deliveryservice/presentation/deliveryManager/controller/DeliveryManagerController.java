@@ -109,7 +109,7 @@ public class DeliveryManagerController {
     @GetMapping
     @RequireRoles({"MASTER", "HUB_MANAGER", "DELIVERY_MANAGER"})
     public ResponseEntity<CommonResponse<Page<DeliveryManagerResponse>>> searchDeliveryManagers(
-            @Parameter(description = "배송 담당자 타입", example = "HUB_DELIVERY_MANAGER")
+            @Parameter(description = "배송 담당자 타입", example = "HUB_DELIVERY")
             @RequestParam(required = false) DeliveryManagerType type,
             @Parameter(description = "허브 ID", example = "22222222-2222-2222-2222-222222222222")
             @RequestParam(required = false) UUID hubId,

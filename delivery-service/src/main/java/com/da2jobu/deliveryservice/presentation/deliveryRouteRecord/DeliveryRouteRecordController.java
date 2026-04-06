@@ -71,6 +71,7 @@ public class DeliveryRouteRecordController {
     @Operation(summary = "배송 경로 실적 갱신", description = "실제 이동 거리, 실제 소요 시간, 남은 시간을 갱신합니다.")
     @PutMapping("/delivery-routes/{routeRecordId}/metrics")
     public ResponseEntity<CommonResponse<UpdateDeliveryRouteMetricsResponseDto>> updateDeliveryRouteMetrics(
+            @Parameter(description = "실적을 갱신할 경로 기록 ID", example = "11111111-1111-1111-1111-111111111111")
             @PathVariable UUID routeRecordId,
             @Valid @RequestBody UpdateDeliveryRouteMetricsRequest request
     ) {
@@ -82,7 +83,7 @@ public class DeliveryRouteRecordController {
     @Operation(summary = "배송 경로 삭제", description = "삭제 요청자를 기록하며 배송 경로를 삭제합니다.")
     @DeleteMapping("/delivery-routes/{routeRecordId}")
     public ResponseEntity<CommonResponse<DeleteDeliveryRouteRecordResponseDto>> deleteDeliveryRouteRecord(
-            @Parameter(description = "실적을 갱신할 경로 기록 ID", example = "11111111-1111-1111-1111-111111111111")
+            @Parameter(description = "삭제할 경로 기록 ID", example = "11111111-1111-1111-1111-111111111111")
             @PathVariable UUID routeRecordId,
             @Parameter(description = "삭제 요청자", example = "master01")
             @RequestParam String deletedBy

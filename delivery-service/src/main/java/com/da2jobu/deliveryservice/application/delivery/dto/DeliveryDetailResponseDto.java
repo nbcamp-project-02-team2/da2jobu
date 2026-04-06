@@ -13,7 +13,7 @@ public record DeliveryDetailResponseDto(
         UUID deliveryId,
         @Schema(description = "주문 ID", example = "22222222-2222-2222-2222-222222222222")
         UUID orderId,
-        @Schema(description = "배송 상태", example = "READY")
+        @Schema(description = "배송 상태", example = "HUB_WAITING")
         DeliveryStatus status,
         @Schema(description = "출발 허브 ID", example = "33333333-3333-3333-3333-333333333333")
         UUID originHubId,

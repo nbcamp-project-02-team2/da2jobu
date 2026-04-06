@@ -14,7 +14,7 @@ public record DeliveryManagerResponse(
         UUID userId,
         @Schema(description = "허브 ID", example = "33333333-3333-3333-3333-333333333333", nullable = true)
         UUID hubId,
-        @Schema(description = "배송 담당자 타입", example = "HUB_DELIVERY_MANAGER")
+        @Schema(description = "배송 담당자 타입", example = "HUB_DELIVERY")
         DeliveryManagerType type,
         @Schema(description = "순번", example = "1")
         int seq

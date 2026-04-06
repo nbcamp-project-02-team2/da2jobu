@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 @Schema(description = "배송 경로 상태 변경 요청")
 public record UpdateDeliveryRouteStatusRequest(
-        @Schema(description = "배송 경로 상태", example = "IN_PROGRESS")
+        @Schema(description = "배송 경로 상태", example = "OUT_FOR_DELIVERY")
         @NotNull(message = "배송 경로 상태는 필수입니다.")
         DeliveryRouteStatus status
 ) {

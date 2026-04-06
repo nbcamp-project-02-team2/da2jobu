@@ -14,7 +14,7 @@ public record InternalUserResponse(
         @Schema(description = "아이디", example = "master01")
         String username,
 
-        @Schema(description = "이름", example = "박성준")
+        @Schema(description = "이름", example = "홍길동")
         String name,
 
         @Schema(description = "슬랙 ID", example = "U12345678")

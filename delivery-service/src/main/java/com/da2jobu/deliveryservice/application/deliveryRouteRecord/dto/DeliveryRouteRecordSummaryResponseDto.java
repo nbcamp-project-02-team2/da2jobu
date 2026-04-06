@@ -43,7 +43,7 @@ public record DeliveryRouteRecordSummaryResponseDto(
         @Schema(description = "남은 총 예상 시간(분)", example = "50")
         Integer remainDurationMin,
 
-        @Schema(description = "배송 경로 상태", example = "IN_PROGRESS")
+        @Schema(description = "배송 경로 상태", example = "OUT_FOR_DELIVERY")
         DeliveryRouteStatus status,
 
         @Schema(description = "배송 담당자 ID", example = "44444444-4444-4444-4444-444444444444")

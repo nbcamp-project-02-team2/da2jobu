@@ -44,7 +44,7 @@ public class DeliveryController {
     public DeliveryListResponseDto getDeliveries(
             @Parameter(description = "주문 ID", example = "22222222-2222-2222-2222-222222222222")
             @RequestParam(required = false) UUID orderId,
-            @Parameter(description = "배송 상태", example = "READY")
+            @Parameter(description = "배송 상태", example = "HUB_WAITING")
             @RequestParam(required = false) DeliveryStatus status,
             @Parameter(description = "출발 허브 ID", example = "33333333-3333-3333-3333-333333333333")
             @RequestParam(required = false) UUID originHubId,

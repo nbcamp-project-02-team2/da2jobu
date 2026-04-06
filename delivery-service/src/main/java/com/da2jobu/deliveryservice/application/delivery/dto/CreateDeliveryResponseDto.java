@@ -14,7 +14,7 @@ public record CreateDeliveryResponseDto(
         @Schema(description = "주문 ID", example = "22222222-2222-2222-2222-222222222222")
         UUID orderId,
 
-        @Schema(description = "배송 상태", example = "READY")
+        @Schema(description = "배송 상태", example = "HUB_WAITING")
         DeliveryStatus status
 ) {
     public static CreateDeliveryResponseDto from(Delivery delivery) {
