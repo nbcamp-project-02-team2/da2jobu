@@ -44,7 +44,13 @@ public class Delivery extends BaseEntity {
     @Column(name = "receiver_slack_id", nullable = false, length = 100)
     private String receiverSlackId;
 
-    @Column(name = "company_delivery_manager_id", nullable = false)
+    @Column(name = "supplier_company_id")
+    private UUID supplierCompanyId;
+
+    @Column(name = "receiver_company_id")
+    private UUID receiverCompanyId;
+
+    @Column(name = "company_delivery_manager_id")
     private UUID companyDeliveryManagerId;
 
     @Column(name = "request_note", length = 500)
@@ -52,6 +58,9 @@ public class Delivery extends BaseEntity {
 
     @Column(name = "expected_duration_total_min")
     private Integer expectedDurationTotalMin;
+
+    @Column(name = "desired_delivery_at")
+    private LocalDateTime desiredDeliveryAt;
 
     @Column(name = "started_at")
     private LocalDateTime startedAt;
@@ -68,9 +77,12 @@ public class Delivery extends BaseEntity {
             String deliveryAddress,
             String receiverName,
             String receiverSlackId,
+            UUID supplierCompanyId,
+            UUID receiverCompanyId,
             UUID companyDeliveryManagerId,
             String requestNote,
             Integer expectedDurationTotalMin,
+            LocalDateTime desiredDeliveryAt,
             LocalDateTime startedAt,
             LocalDateTime completedAt
     ) {
@@ -81,9 +93,12 @@ public class Delivery extends BaseEntity {
         this.deliveryAddress = deliveryAddress;
         this.receiverName = receiverName;
         this.receiverSlackId = receiverSlackId;
+        this.supplierCompanyId = supplierCompanyId;
+        this.receiverCompanyId = receiverCompanyId;
         this.companyDeliveryManagerId = companyDeliveryManagerId;
         this.requestNote = requestNote;
         this.expectedDurationTotalMin = expectedDurationTotalMin;
+        this.desiredDeliveryAt = desiredDeliveryAt;
         this.startedAt = startedAt;
         this.completedAt = completedAt;
     }
@@ -98,6 +113,10 @@ public class Delivery extends BaseEntity {
 
     public void markCompleted(LocalDateTime completedAt) {
         this.completedAt = completedAt;
+    }
+
+    public void updateManagerId(UUID companyDeliveryManagerId) {
+        this.companyDeliveryManagerId = companyDeliveryManagerId;
     }
 
     public void softDelete(String deletedBy) {

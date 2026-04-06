@@ -36,12 +36,24 @@ public class DeliveryRouteRecord extends BaseEntity {
     @Column(name = "origin_type", nullable = false, length = 20)
     private RouteLocationType originType;
 
+    @Column(name = "origin_latitude")
+    private Double originLatitude;
+
+    @Column(name = "origin_longitude")
+    private Double originLongitude;
+
     @Column(name = "destination_id", nullable = false)
     private UUID destinationId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "destination_type", nullable = false, length = 20)
     private RouteLocationType destinationType;
+
+    @Column(name = "destination_latitude")
+    private Double destinationLatitude;
+
+    @Column(name = "destination_longitude")
+    private Double destinationLongitude;
 
     @Column(name = "expected_distance_km", nullable = false, precision = 10, scale = 2)
     private BigDecimal expectedDistanceKm;
@@ -53,7 +65,7 @@ public class DeliveryRouteRecord extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private DeliveryRouteStatus status;
 
-    @Column(name = "delivery_manager_id", nullable = false)
+    @Column(name = "delivery_manager_id")
     private UUID deliveryManagerId;
 
     @Column(name = "real_distance_km", precision = 10, scale = 2)
@@ -71,8 +83,12 @@ public class DeliveryRouteRecord extends BaseEntity {
             Integer sequence,
             UUID originId,
             RouteLocationType originType,
+            Double originLatitude,
+            Double originLongitude,
             UUID destinationId,
             RouteLocationType destinationType,
+            Double destinationLatitude,
+            Double destinationLongitude,
             BigDecimal expectedDistanceKm,
             Integer expectedDurationMin,
             DeliveryRouteStatus status,
@@ -85,8 +101,12 @@ public class DeliveryRouteRecord extends BaseEntity {
         this.sequence = sequence;
         this.originId = originId;
         this.originType = originType;
+        this.originLatitude = originLatitude;
+        this.originLongitude = originLongitude;
         this.destinationId = destinationId;
         this.destinationType = destinationType;
+        this.destinationLatitude = destinationLatitude;
+        this.destinationLongitude = destinationLongitude;
         this.expectedDistanceKm = expectedDistanceKm;
         this.expectedDurationMin = expectedDurationMin;
         this.status = status;
@@ -105,8 +125,24 @@ public class DeliveryRouteRecord extends BaseEntity {
         this.realDurationMin = realDurationMin;
     }
 
+    public void updateManagerId(UUID deliveryManagerId) {
+        this.deliveryManagerId = deliveryManagerId;
+    }
+
     public void updateRemainDurationMin(Integer remainDurationMin) {
         this.remainDurationMin = remainDurationMin;
+    }
+
+    public void updateCoordinates(
+            Double originLatitude,
+            Double originLongitude,
+            Double destinationLatitude,
+            Double destinationLongitude
+    ) {
+        this.originLatitude = originLatitude;
+        this.originLongitude = originLongitude;
+        this.destinationLatitude = destinationLatitude;
+        this.destinationLongitude = destinationLongitude;
     }
 
     public void softDelete(String deletedBy) {

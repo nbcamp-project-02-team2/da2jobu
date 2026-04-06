@@ -4,12 +4,10 @@ import java.util.UUID;
 
 public record UpdateHubPathCommand(
         UUID hub_path_id,
-        String departHubName,
-        String arriveHubName
-
-)
-{
-    public static UpdateHubPathCommand of (UUID hub_path_id, String departHubName, String arriveHubName) {
-        return new UpdateHubPathCommand(hub_path_id, departHubName, arriveHubName);
+        UUID departHubId,
+        UUID arriveHubId
+) {
+    public static UpdateHubPathCommand of(UUID hub_path_id, UUID departHubId, UUID arriveHubId) {
+        return new UpdateHubPathCommand(hub_path_id, departHubId, arriveHubId);
     }
 }

@@ -1,12 +1,9 @@
 package com.da2jobu.deliveryservice.domain.deliveryManager.model.entity;
 
-import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryAssignmentId;
-import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryAssignmentStatus;
-import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryId;
-import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryManagerId;
-import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.DeliveryRouteRecordId;
-import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.HubId;
+import com.da2jobu.deliveryservice.domain.deliveryManager.model.vo.*;
 import common.entity.BaseEntity;
+import common.exception.CustomException;
+import common.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -33,7 +30,7 @@ public class DeliveryAssignment extends BaseEntity {
     private DeliveryId deliveryId;
 
     @Embedded
-    @AttributeOverride(name = "deliveryRouteRecordId", column = @Column(name = "delivery_route_record_id"))
+    @AttributeOverride(name = "deliveryRouteRecordId", column = @Column(name = "delivery_route_record_id", nullable = false))
     private DeliveryRouteRecordId deliveryRouteRecordId;
 
     @Embedded
@@ -62,4 +59,10 @@ public class DeliveryAssignment extends BaseEntity {
         return assignment;
     }
 
+    public void complete() {
+        if (this.status != DeliveryAssignmentStatus.ASSIGNED) {
+            throw new CustomException(ErrorCode.INVALID_DELIVERY_STATUS);
+        }
+        this.status = DeliveryAssignmentStatus.COMPLETED;
+    }
 }

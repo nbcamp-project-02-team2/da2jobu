@@ -15,9 +15,12 @@ public record DeliveryDetailResponseDto(
         String deliveryAddress,
         String receiverName,
         String receiverSlackId,
+        UUID supplierCompanyId,
+        UUID receiverCompanyId,
         UUID companyDeliveryManagerId,
         String requestNote,
         Integer expectedDurationTotalMin,
+        LocalDateTime desiredDeliveryAt,
         LocalDateTime startedAt,
         LocalDateTime completedAt
 ) {
@@ -31,9 +34,12 @@ public record DeliveryDetailResponseDto(
                 delivery.getDeliveryAddress(),
                 delivery.getReceiverName(),
                 delivery.getReceiverSlackId(),
+                delivery.getSupplierCompanyId(),
+                delivery.getReceiverCompanyId(),
                 delivery.getCompanyDeliveryManagerId(),
                 delivery.getRequestNote(),
                 delivery.getExpectedDurationTotalMin(),
+                delivery.getDesiredDeliveryAt(),
                 delivery.getStartedAt(),
                 delivery.getCompletedAt()
         );
