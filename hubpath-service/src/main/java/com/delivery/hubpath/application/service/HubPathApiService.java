@@ -22,8 +22,10 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
@@ -145,7 +147,9 @@ public class HubPathApiService {
     }
 
     private void validateMasterRole(String userRole) {
-        if (!"MASTER".equals(userRole)) throw new RuntimeException("MASTER 권한만 접근 가능합니다.");
+        if (!"MASTER".equals(userRole)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "MASTER 권한만 접근 가능합니다.");
+        }
     }
 
     private HubResponse fetchHubById(UUID hubId) {
