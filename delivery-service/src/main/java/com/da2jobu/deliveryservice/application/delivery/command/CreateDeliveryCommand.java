@@ -12,6 +12,8 @@ public record CreateDeliveryCommand(
         String deliveryAddress,
         String receiverName,
         String receiverSlackId,
+        UUID supplierCompanyId,
+        UUID receiverCompanyId,
         UUID companyDeliveryManagerId,
         String requestNote,
         Integer expectedDurationTotalMin,
