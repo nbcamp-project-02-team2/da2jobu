@@ -4,16 +4,16 @@ import com.da2jobu.deliveryservice.infrastructure.delivery.dto.HubPathResponseDt
 import common.dto.CommonResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.UUID;
 
 @FeignClient(name = "hub-path-service")
 public interface HubPathServiceClient {
 
-    @GetMapping("/api/internal/hub-paths/{hubPathId}")
+    @GetMapping("/api/internal/hub-paths/search")
     CommonResponse<HubPathResponseDto> getHubPath(
-            @PathVariable("hubPathId") String hubPathId,
-            @RequestParam(value = "departHubName", required = false) String departHubName,
-            @RequestParam(value = "arriveHubName", required = false) String arriveHubName
+            @RequestParam("departHubName") String departHubName,
+            @RequestParam("arriveHubName") String arriveHubName
     );
 }

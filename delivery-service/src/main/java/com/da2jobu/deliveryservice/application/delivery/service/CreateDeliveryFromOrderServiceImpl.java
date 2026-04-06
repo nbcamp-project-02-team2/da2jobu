@@ -15,8 +15,20 @@ import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.entity.DeliveryRou
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.repository.DeliveryRouteRecordRepository;
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.vo.DeliveryRouteStatus;
 import com.da2jobu.deliveryservice.domain.deliveryRouteRecord.vo.RouteLocationType;
-import com.da2jobu.deliveryservice.infrastructure.delivery.client.*;
-import com.da2jobu.deliveryservice.infrastructure.delivery.dto.*;
+import com.da2jobu.deliveryservice.infrastructure.delivery.client.CompanyServiceClient;
+import com.da2jobu.deliveryservice.infrastructure.delivery.client.HubPathServiceClient;
+import com.da2jobu.deliveryservice.infrastructure.delivery.client.HubServiceClient;
+import com.da2jobu.deliveryservice.infrastructure.delivery.client.OrderServiceClient;
+import com.da2jobu.deliveryservice.infrastructure.delivery.client.ProductServiceClient;
+import com.da2jobu.deliveryservice.infrastructure.delivery.client.UserServiceClient;
+import com.da2jobu.deliveryservice.infrastructure.delivery.dto.CompanyInfoDto;
+import com.da2jobu.deliveryservice.infrastructure.delivery.dto.HubPathResponseDto;
+import com.da2jobu.deliveryservice.infrastructure.delivery.dto.HubResponse;
+import com.da2jobu.deliveryservice.infrastructure.delivery.dto.LocationInfo;
+import com.da2jobu.deliveryservice.infrastructure.delivery.dto.OrderInfoDto;
+import com.da2jobu.deliveryservice.infrastructure.delivery.dto.ProductInfoDto;
+import com.da2jobu.deliveryservice.infrastructure.delivery.dto.UserInfoByIdDto;
+import com.da2jobu.deliveryservice.infrastructure.delivery.dto.UserInfoDto;
 import com.da2jobu.deliveryservice.infrastructure.delivery.messaging.DeliveryEventProducer;
 import com.da2jobu.deliveryservice.infrastructure.delivery.messaging.DeliveryPreparedEventProducer;
 import common.dto.CommonResponse;
@@ -29,7 +41,11 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -70,8 +86,7 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
             return;
         }
 
-        // createdBy(username)로 사용자 조회
-        // slackId가 null인지 확인 필요
+        // createdBy(username)으로 사용자 조회
         UserInfoDto receiverUser = userServiceClient.getUserByUsername(command.createdBy());
 
         // supplierId, receiverId로 업체 조회
@@ -82,19 +97,15 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
         HubResponse originHub = getHub(supplierCompany.hubId());
         HubResponse destinationHub = getHub(receiverCompany.hubId());
 
-//        UUID originHubId = supplierCompany.hubId();
-//        UUID destinationHubId = receiverCompany.hubId();
-
         // 허브 경로 조회
         HubPathResponseDto hubPath = getHubPath(originHub.name(), destinationHub.name());
+        List<HubPathResponseDto.StepDto> sortedSteps = getSortedSteps(hubPath);
 
-        // 배송 담당자 배정, 초기에는 null로 설정
-        // TODO: 배송 경로 배정 후에는 중간 배송 담당자 추가
+        // 배송 담당자
         UUID companyDeliveryManagerId = null;
         UUID hubDeliveryManagerId = null;
 
-        // 총 예상 시간 계산
-        int totalExpectedDuration = defaultDuration(hubPath.duration());
+        int totalExpectedDuration = defaultDuration(hubPath.totalDuration());
 
         // Delivery 생성
         CreateDeliveryCommand createDeliveryCommand = new CreateDeliveryCommand(
@@ -123,7 +134,8 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
                 receiverCompany,
                 originHub,
                 destinationHub,
-                hubPath,
+                sortedSteps,
+                totalExpectedDuration,
                 hubDeliveryManagerId,
                 companyDeliveryManagerId
         );
@@ -140,14 +152,13 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
                 command,
                 receiverUser,
                 receiverCompany,
-                originHub,
                 destinationHub,
-                hubPath,
+                sortedSteps,
                 companyDeliveryManagerId
         );
 
-        // 첫 번째 허브 구간 담당자 배정
         DeliveryRouteRecord firstHubRoute = findFirstHubRoute(routeRecords);
+        // 허브 배송 담당자 배정
         if (firstHubRoute != null) {
             hubDeliveryAssignmentService.assignHubDelivery(
                     DeliveryId.of(deliveryId),
@@ -167,7 +178,8 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
             CompanyInfoDto receiverCompany,
             HubResponse originHub,
             HubResponse destinationHub,
-            HubPathResponseDto hubPath,
+            List<HubPathResponseDto.StepDto> sortedSteps,
+            Integer totalExpectedDuration,
             UUID hubDeliveryManagerId,
             UUID companyDeliveryManagerId
     ) {
@@ -179,7 +191,11 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
         LocationInfo destinationHubLocation = toHubLocation(destinationHub);
         LocationInfo receiverCompanyLocation = toCompanyLocation(receiverCompany);
 
-        // 0. 공급 업체 -> 출발 허브
+        Map<UUID, HubResponse> hubCache = new HashMap<>();
+        hubCache.put(originHub.hubId(), originHub);
+        hubCache.put(destinationHub.hubId(), destinationHub);
+
+        // 0. 공급업체 -> 출발 허브
         routes.add(createRouteRecord(
                 deliveryId,
                 sequence++,
@@ -189,53 +205,33 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
                 0,
                 DeliveryRouteStatus.HUB_WAITING,
                 null,
-                defaultDuration(hubPath.duration())
+                totalExpectedDuration
         ));
 
-        // 1. 출발 허브 -> 경유 허브 / 도착 허브
-        if (hubPath.middleHubId() != null) {
-            HubResponse middleHub = getHub(hubPath.middleHubId());
-            LocationInfo middleHubLocation = toHubLocation(middleHub);
+        // 1. 허브 -> 허브 경로 (steps 기반)
+        for (HubPathResponseDto.StepDto step : sortedSteps) {
+            HubResponse startHub = hubCache.computeIfAbsent(step.startHubId(), this::getHub);
+            HubResponse endHub = hubCache.computeIfAbsent(step.endHubId(), this::getHub);
+
+            LocationInfo startHubLocation = toHubLocation(startHub);
+            LocationInfo endHubLocation = toHubLocation(endHub);
+
+            UUID assignedHubManagerId = (step.stepOrder() == 1) ? hubDeliveryManagerId : null;
 
             routes.add(createRouteRecord(
                     deliveryId,
                     sequence++,
-                    originHubLocation,
-                    middleHubLocation,
-                    defaultDistance(hubPath.firstDistance()),
-                    defaultDuration(hubPath.firstDuration()),
+                    startHubLocation,
+                    endHubLocation,
+                    defaultDistance(step.distance()),
+                    defaultDuration(step.duration()),
                     DeliveryRouteStatus.HUB_WAITING,
-                    hubDeliveryManagerId,
-                    defaultDuration(hubPath.duration())
-            ));
-
-            // 2. 경유 허브 -> 도착 허브
-            routes.add(createRouteRecord(
-                    deliveryId,
-                    sequence++,
-                    middleHubLocation,
-                    destinationHubLocation,
-                    defaultDistance(hubPath.secondDistance()),
-                    defaultDuration(hubPath.secondDuration()),
-                    DeliveryRouteStatus.HUB_WAITING,
-                    null,
-                    defaultDuration(hubPath.secondDuration())
-            ));
-        } else {
-            routes.add(createRouteRecord(
-                    deliveryId,
-                    sequence++,
-                    originHubLocation,
-                    destinationHubLocation,
-                    defaultDistance(hubPath.distance()),
-                    defaultDuration(hubPath.duration()),
-                    DeliveryRouteStatus.HUB_WAITING,
-                    hubDeliveryManagerId,
-                    defaultDuration(hubPath.duration())
+                    assignedHubManagerId,
+                    calculateRemainDuration(step.stepOrder(), sortedSteps)
             ));
         }
 
-        // 마지막, 도착 허브 -> 수령 업체
+        // 마지막. 도착 허브 -> 수령 업체
         routes.add(createRouteRecord(
                 deliveryId,
                 sequence,
@@ -288,9 +284,8 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
             CreateDeliveryFromOrderCommand command,
             UserInfoDto ordererUser,
             CompanyInfoDto receiverCompany,
-            HubResponse originHub,
             HubResponse destinationHub,
-            HubPathResponseDto hubPath,
+            List<HubPathResponseDto.StepDto> sortedSteps,
             UUID companyDeliveryManagerId
     ) {
         OrderInfoDto order = orderServiceClient.getOrder(command.orderId());
@@ -304,7 +299,7 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
             deliveryManager = managerResponse.getData();
         }
 
-        // AI 요약용 origin은 "최종 허브" 기준으로 맞춤
+        // AI 요약용 origin은 "최종 허브" 기준
         DeliveryLocationPayload originPayload = new DeliveryLocationPayload(
                 destinationHub.name(),
                 destinationHub.address(),
@@ -312,7 +307,7 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
                 destinationHub.longitude()
         );
 
-        List<DeliveryLocationPayload> waypointPayloads = buildWaypointPayloads(hubPath, destinationHub);
+        List<DeliveryLocationPayload> waypointPayloads = buildWaypointPayloads(sortedSteps);
 
         DeliveryLocationPayload destinationPayload = new DeliveryLocationPayload(
                 null,
@@ -338,27 +333,44 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
         );
     }
 
-    private List<DeliveryLocationPayload> buildWaypointPayloads(HubPathResponseDto hubPath, HubResponse destinationHub) {
+    private List<DeliveryLocationPayload> buildWaypointPayloads(List<HubPathResponseDto.StepDto> sortedSteps) {
         List<DeliveryLocationPayload> waypoints = new ArrayList<>();
+        Map<UUID, HubResponse> hubCache = new HashMap<>();
+        LinkedHashSet<UUID> waypointHubIds = new LinkedHashSet<>();
 
-        if (hubPath.middleHubId() != null) {
-            HubResponse middleHub = getHub(hubPath.middleHubId());
+        for (HubPathResponseDto.StepDto step : sortedSteps) {
+            waypointHubIds.add(step.endHubId());
+        }
+
+        for (UUID hubId : waypointHubIds) {
+            HubResponse hub = hubCache.computeIfAbsent(hubId, this::getHub);
             waypoints.add(new DeliveryLocationPayload(
-                    middleHub.name(),
-                    middleHub.address(),
-                    middleHub.latitude(),
-                    middleHub.longitude()
+                    hub.name(),
+                    hub.address(),
+                    hub.latitude(),
+                    hub.longitude()
             ));
         }
 
-        waypoints.add(new DeliveryLocationPayload(
-                destinationHub.name(),
-                destinationHub.address(),
-                destinationHub.latitude(),
-                destinationHub.longitude()
-        ));
-
         return waypoints;
+    }
+
+    private List<HubPathResponseDto.StepDto> getSortedSteps(HubPathResponseDto hubPath) {
+        if (hubPath == null || hubPath.steps() == null || hubPath.steps().isEmpty()) {
+            throw new IllegalStateException("허브 경로(step) 정보가 없습니다.");
+        }
+
+        return hubPath.steps().stream()
+                .sorted(Comparator.comparingInt(HubPathResponseDto.StepDto::stepOrder))
+                .toList();
+    }
+
+    private Integer calculateRemainDuration(int currentStepOrder, List<HubPathResponseDto.StepDto> sortedSteps) {
+        return sortedSteps.stream()
+                .filter(step -> step.stepOrder() >= currentStepOrder)
+                .map(HubPathResponseDto.StepDto::duration)
+                .filter(duration -> duration != null)
+                .reduce(0, Integer::sum);
     }
 
     private DeliveryRouteRecord findFirstHubRoute(List<DeliveryRouteRecord> routeRecords) {
@@ -400,7 +412,7 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
 
     private HubPathResponseDto getHubPath(String departHubName, String arriveHubName) {
         CommonResponse<HubPathResponseDto> response =
-                hubPathServiceClient.getHubPath("search", departHubName, arriveHubName);
+                hubPathServiceClient.getHubPath(departHubName, arriveHubName);
         return response.getData();
     }
 
