@@ -11,5 +11,5 @@ import java.util.UUID;
 public interface OrderFeignClient {
 
     @GetMapping("/api/orders/internal/active-count")
-    CommonResponse<Integer> hasActiveOrders(@RequestParam("companyId") UUID companyId);
+    CommonResponse<Long> countActiveOrders(@RequestParam("companyId") UUID companyId);
 }
