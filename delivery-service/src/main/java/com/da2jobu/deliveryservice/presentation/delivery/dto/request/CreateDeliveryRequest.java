@@ -27,6 +27,10 @@ public record CreateDeliveryRequest(
         @NotBlank(message = "수령인 Slack ID는 필수입니다.")
         String receiverSlackId,
 
+        UUID supplierCompanyId,
+
+        UUID receiverCompanyId,
+
         UUID companyDeliveryManagerId,
 
         String requestNote,
@@ -46,6 +50,8 @@ public record CreateDeliveryRequest(
                 deliveryAddress,
                 receiverName,
                 receiverSlackId,
+                supplierCompanyId,
+                receiverCompanyId,
                 companyDeliveryManagerId,
                 requestNote,
                 expectedDurationTotalMin,

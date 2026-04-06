@@ -233,6 +233,8 @@ class CreateDeliveryFromOrderServiceImplTest {
             assertThat(createCommand.deliveryAddress()).isEqualTo("수령업체 주소");
             assertThat(createCommand.receiverName()).isEqualTo("김담당");
             assertThat(createCommand.receiverSlackId()).isEqualTo("U12345678");
+            assertThat(createCommand.supplierCompanyId()).isEqualTo(fixture.supplierId);
+            assertThat(createCommand.receiverCompanyId()).isEqualTo(fixture.receiverId);
             assertThat(createCommand.requestNote()).isEqualTo("문 앞에 놔주세요");
             assertThat(createCommand.expectedDurationTotalMin()).isEqualTo(289);
             assertThat(createCommand.status()).isEqualTo(DeliveryStatus.HUB_WAITING);

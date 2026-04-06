@@ -115,6 +115,8 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
                 receiverCompany.address(),
                 receiverUser.name(),
                 receiverUser.slackId(),
+                supplierCompany.companyId(),
+                receiverCompany.companyId(),
                 companyDeliveryManagerId,
                 command.requirements(),
                 totalExpectedDuration,

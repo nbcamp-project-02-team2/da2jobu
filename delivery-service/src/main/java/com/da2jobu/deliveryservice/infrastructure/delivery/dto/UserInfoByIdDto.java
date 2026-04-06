@@ -12,6 +12,7 @@ public record UserInfoByIdDto(
         String email,
         String slackId,
         String userRole,
-        UUID hubId
+        UUID hubId,
+        UUID companyId
 ) {
 }
