@@ -32,6 +32,17 @@ public class UserApplicationService {
         return UserResponse.from(user);
     }
 
+    public InternalUserByIdResponseDto getUserByUserId(UUID userId) {
+        User user = userRepository.findActiveById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        return new InternalUserByIdResponseDto(
+                user.getUserId(),
+                user.getRole(),
+                user.getHubId(),
+                user.getCompanyId()
+        );
+    }
+
     public UserPageResponse getUsers(String keyword, UserRole role, UserStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<User> userPage = userRepository.searchActiveUsers(keyword, role, status, pageable);

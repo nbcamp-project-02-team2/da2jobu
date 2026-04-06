@@ -29,6 +29,9 @@ public record SignupRequest(
 
         @Schema(description = "슬랙 ID", example = "U12345678")
         @NotBlank
+        String email,
+
+        @NotBlank
         String slackId,
 
         @Schema(description = "사용자 역할", example = "MASTER")

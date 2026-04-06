@@ -19,6 +19,7 @@ public record UserResponse(
         @Schema(description = "이름", example = "홍길동")
         String name,
 
+        String email,
         @Schema(description = "슬랙 ID", example = "U12345678")
         String slackId,
 
@@ -39,6 +40,7 @@ public record UserResponse(
                 user.getUserId(),
                 user.getUsername(),
                 user.getName(),
+                user.getEmail(),
                 user.getSlackId(),
                 user.getRole(),
                 user.getStatus(),
