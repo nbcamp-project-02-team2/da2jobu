@@ -16,6 +16,7 @@ services:
       start_period: 20s
     networks:
       - kafka-network
+
   postgres:
     image: pgvector/pgvector:pg17
     container_name: da2joburureung-postgres
@@ -115,7 +116,7 @@ services:
     ports:
       - "${NOTIFICATION_SERVER_PORT}:${NOTIFICATION_SERVER_PORT}"
     environment:
-      SERVER_PORT: 8100
+      SERVER_PORT: ${NOTIFICATION_SERVER_PORT}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${NOTIFICATION_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
@@ -123,14 +124,14 @@ services:
     env_file:
       - .env
     volumes:
-      - ./logs:/app/logs  # Optional: for persistent logs
+      - ./logs:/app/logs
     depends_on:
-       postgres:
-         condition: service_healthy
-       redis:
-         condition: service_healthy
-       eureka-server:
-         condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
     networks:
       - kafka-network
 
@@ -142,8 +143,8 @@ services:
     ports:
       - "${DELIVERY_SERVER_PORT}:${DELIVERY_SERVER_PORT}"
     environment:
-      SERVER_PORT: 8094
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/delivery_db
+      SERVER_PORT: ${DELIVERY_SERVER_PORT}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DELIVERY_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
@@ -163,14 +164,14 @@ services:
         condition: service_started
     networks:
       - kafka-network
-  
+
   hub-service:
     build:
       context: .
       dockerfile: hub-service/Dockerfile
     container_name: da2joburureung-hub
     ports:
-      - "8084:8084"
+      - "${HUB_SERVER_PORT}:8084"
     environment:
       SERVER_PORT: 8084
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${HUB_DB}
@@ -199,7 +200,7 @@ services:
       dockerfile: hubpath-service/Dockerfile
     container_name: da2joburureung-hubpath
     ports:
-      - "8086:8086"
+      - "${HUB_PATH_SERVER_PORT}:8086"
     environment:
       SERVER_PORT: 8086
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${HUB_DB}
@@ -218,6 +219,8 @@ services:
       redis:
         condition: service_healthy
       eureka-server:
+        condition: service_started
+      hub-service:
         condition: service_started
     networks:
       - kafka-network
@@ -260,7 +263,7 @@ services:
       dockerfile: company-service/Dockerfile
     container_name: da2joburureung-company
     ports:
-      - "${COMPANY_SERVER_PORT}:8086"
+      - "${COMPANY_SERVER_PORT}:8088"
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SERVER_PORT: 8088
@@ -282,64 +285,6 @@ services:
       kafka:
         condition: service_healthy
       eureka-server:
-        condition: service_started
-    networks:
-      - kafka-network
-
-  hub-service:
-    build:
-      context: .
-      dockerfile: hub-service/Dockerfile
-    container_name: da2joburureung-hub
-    ports:
-      - "${HUB_SERVER_PORT}:8084"
-    environment:
-      SERVER_PORT: 8084
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${HUB_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
-      KAKAO_API_KEY: ${KAKAO_API_KEY}
-    env_file:
-      - .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-    networks:
-      - kafka-network
-
-  hubpath-service:
-    build:
-      context: .
-      dockerfile: hubpath-service/Dockerfile
-    container_name: da2joburureung-hubpath
-    ports:
-      - "${HUBPATH_SERVER_PORT}:8086"
-    environment:
-      SERVER_PORT: 8086
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${HUB_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
-      KAKAO_API_KEY: ${KAKAO_API_KEY}
-    env_file:
-      - .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-      hub-service:
         condition: service_started
     networks:
       - kafka-network
