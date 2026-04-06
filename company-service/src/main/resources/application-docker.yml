@@ -31,8 +31,6 @@ spring:
       properties:
         spring.json.trusted.packages: "*"
 
-internal:
-  token: ${INTERNAL_TOKEN}
 
 resilience4j:
   circuitbreaker:

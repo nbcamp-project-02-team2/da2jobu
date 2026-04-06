@@ -13,8 +13,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OutboxEventScheduler {
 
-    private static final int MAX_RETRY = 3;
-
     private final OutboxEventRepository outboxEventRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
@@ -27,7 +25,7 @@ public class OutboxEventScheduler {
             return;
         }
 
-        log.debug("미발행 아웃박스 이벤트 처리 시작: {}건", pendingEvents.size());
+        log.debug("아웃박스 이벤트 처리 시작: {}건", pendingEvents.size());
 
         for (OutboxEvent event : pendingEvents) {
             try {
@@ -35,18 +33,9 @@ public class OutboxEventScheduler {
                         .get();
                 event.markPublished();
                 outboxEventRepository.save(event);
-                log.info("아웃박스 이벤트 발행 완료: id={}, topic={}, retryCount={}",
-                        event.getEventId(), event.getTopic(), event.getRetryCount());
+                log.info("아웃박스 이벤트 발행 완료: id={}, topic={}", event.getEventId(), event.getTopic());
             } catch (Exception e) {
-                event.incrementRetry(MAX_RETRY);
-                outboxEventRepository.save(event);
-                if (event.getStatus() == OutboxStatus.FAILED) {
-                    log.error("아웃박스 이벤트 최대 재시도 초과, FAILED 처리: id={}, retryCount={}",
-                            event.getEventId(), event.getRetryCount());
-                } else {
-                    log.warn("아웃박스 이벤트 발행 실패, 재시도 예정: id={}, retryCount={}/{}",
-                            event.getEventId(), event.getRetryCount(), MAX_RETRY);
-                }
+                log.warn("아웃박스 이벤트 발행 실패, 다음 주기에 재시도: id={}, cause={}", event.getEventId(), e.getMessage());
             }
         }
     }
