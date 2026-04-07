@@ -129,4 +129,17 @@ public class User extends BaseEntity {
         this.softDelete(deletedBy);
     }
 
+    public void updateMyInfo(String name, String email, String slackId) {
+        if (name != null && !name.isBlank()) {
+            this.name = name;
+        }
+
+        if (email != null && !email.isBlank()) {
+            this.email = email;
+        }
+
+        if (slackId != null && !slackId.isBlank()) {
+            this.slackId = slackId;
+        }
+    }
 }

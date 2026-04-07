@@ -4,12 +4,14 @@ import com.da2joburereung.userservice.global.security.RoleAuthorizer;
 import com.da2joburereung.userservice.user.application.UserApplicationService;
 import com.da2joburereung.userservice.user.domain.UserRole;
 import com.da2joburereung.userservice.user.domain.UserStatus;
+import com.da2joburereung.userservice.user.dto.request.UserMeUpdateRequest;
 import com.da2joburereung.userservice.user.dto.response.UserPageResponse;
 import com.da2joburereung.userservice.user.dto.response.UserResponse;
 import common.dto.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +35,16 @@ public class UserController {
     ) {
         UserResponse response = userApplicationService.getMyInfo(userId);
         return CommonResponse.ok("내 정보 조회에 성공했습니다.", response);
+    }
+
+    @Operation(summary = "내 정보 수정", description = "게이트웨이가 전달한 X-User-Id 헤더를 기준으로 내 정보를 수정합니다.")
+    @PatchMapping("/me")
+    public ResponseEntity<CommonResponse<UserResponse>> updateMyInfo(
+            @RequestHeader("X-User-Id") String userId,
+            @Valid @RequestBody UserMeUpdateRequest request
+    ) {
+        UserResponse response = userApplicationService.updateMyInfo(userId, request);
+        return CommonResponse.ok("내 정보 수정에 성공했습니다.", response);
     }
 
     @Operation(summary = "사용자 단건 조회", description = "MASTER 권한으로 특정 사용자를 조회합니다.")
