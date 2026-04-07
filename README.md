@@ -144,7 +144,7 @@ AI 기반 배송 이력 조회 기능을 제공합니다. Spring AI + OpenAI, pg
 - 회원가입 / 로그인 (JWT 발급)
 - 내 정보 조회
 - 사용자 단건 조회, 목록 조회
-- 사용자 승인 / 거절 / 삭제
+- 사용자 승인 / 거절 / 삭제 / 수정
 
 ### 상품
 - 상품 생성 / 수정 / 삭제 (Soft Delete)
@@ -290,9 +290,9 @@ docker compose up --build
 | Eureka Dashboard | http://localhost:8761 |
 | API Gateway | http://localhost:8080 |
 | Kafka UI | http://localhost:8071 |
-| Swagger (예: order) | http://localhost:8092/swagger-ui/index.html |
+| Swagger | http://localhost:8080/swagger-ui.html |
 
-> 각 서비스의 Swagger UI는 `http://localhost:{서비스포트}/swagger-ui/index.html`에서 접근할 수 있습니다.
+> 각 서비스의 Swagger UI는 `http://localhost:8080/swagger-ui.html`에서 각 서비스를 선택하여 접근할 수 있습니다.
 
 ### 5) 초기 데이터 설정
 
