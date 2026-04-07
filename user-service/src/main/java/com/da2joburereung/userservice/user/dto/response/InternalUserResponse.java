@@ -16,7 +16,10 @@ public record InternalUserResponse(
 
         @Schema(description = "이름", example = "홍길동")
         String name,
+
+        @Schema(description = "이메일", example = "test@email.com")
         String email,
+
         @Schema(description = "슬랙 ID", example = "U12345678")
         String slackId
 ) {
@@ -24,8 +27,8 @@ public record InternalUserResponse(
         return new InternalUserResponse(
                 user.getUserId(),
                 user.getUsername(),
-                user.getEmail(),
                 user.getName(),
+                user.getEmail(),
                 user.getSlackId()
         );
     }
