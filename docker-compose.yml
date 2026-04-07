@@ -324,6 +324,33 @@ services:
     networks:
       - kafka-network
 
+  ai-service:
+    build:
+      context: .
+      dockerfile: ai-service/Dockerfile
+    container_name: da2joburureung-ai
+    ports:
+      - "${AI_SERVER_PORT}:${AI_SERVER_PORT}"
+    environment:
+      SERVER_PORT: ${AI_SERVER_PORT}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${AI_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - kafka-network
+
   redis:
     image: redis:7-alpine
     container_name: da2joburureung-redis

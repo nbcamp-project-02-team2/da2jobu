@@ -228,6 +228,13 @@ public class OrderService {
     // ── Private 도움 메서드 ──
 
     /**
+     * 6-1. 주문 단건 조회 (내부 API용 — 권한 검증 없음).
+     */
+    public OrderResponse getOrderInternal(UUID orderId) {
+        return OrderResponse.from(findOrderById(orderId));
+    }
+
+    /**
      * 7. 업체의 진행 중인 주문 건수 조회 (내부 API용).
      */
     public long countActiveOrdersByCompanyId(UUID companyId) {

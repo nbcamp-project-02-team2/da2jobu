@@ -165,6 +165,19 @@ public class OrderController {
     }
 
     /**
+     * 6-1. 주문 단건 조회 (내부 API — 서비스 간 호출 전용, 인증 헤더 불필요).
+     */
+    @Operation(summary = "주문 단건 조회 (내부)", description = "서비스 간 내부 호출용 주문 조회 API입니다.")
+    @GetMapping("/internal/{orderId}")
+    public ResponseEntity<CommonResponse<OrderResponse>> getOrderInternal(
+            @Parameter(description = "주문 ID", example = "11111111-1111-1111-1111-111111111111")
+            @PathVariable UUID orderId) {
+
+        OrderResponse response = orderService.getOrderInternal(orderId);
+        return CommonResponse.ok(response);
+    }
+
+    /**
      * 7. 업체의 진행 중인 주문 건수 조회 (내부 API — company-service 전용).
      * PENDING, ACCEPTED 상태인 주문만 카운트.
      */

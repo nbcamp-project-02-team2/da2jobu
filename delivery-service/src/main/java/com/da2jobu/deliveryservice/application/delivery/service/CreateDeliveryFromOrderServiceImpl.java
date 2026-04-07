@@ -106,9 +106,11 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
 
         log.info("originHubId={}, destinationHubId={}", originHub.hubId(), destinationHub.hubId());
 
+
         // 허브 경로 조회
         HubPathResponseDto hubPath = getHubPath(originHub.hubName(), destinationHub.hubName());
         List<HubPathResponseDto.StepDto> sortedSteps = getSortedSteps(hubPath);
+
 
         // 배송 담당자
         UUID companyDeliveryManagerId = null;
@@ -163,15 +165,17 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
                 deliveryId
         );
 
-        DeliveryRouteRecord firstHubRoute = findFirstHubRoute(routeRecords);
-        // 허브 배송 담당자 배정
-        if (firstHubRoute != null) {
-            hubDeliveryAssignmentService.assignHubDelivery(
-                    DeliveryId.of(deliveryId),
-                    DeliveryRouteRecordId.of(firstHubRoute.getDeliveryRouteRecordId()),
-                    originHub.hubId()
-            );
-        }
+//        DeliveryRouteRecord firstHubRoute = findFirstHubRoute(routeRecords);
+//        // 허브 배송 담당자 배정
+//        if (firstHubRoute != null) {
+//            hubDeliveryAssignmentService.assignHubDelivery(
+//                    DeliveryId.of(deliveryId),
+//                    DeliveryRouteRecordId.of(firstHubRoute.getDeliveryRouteRecordId()),
+//                    originHub.hubId()
+//            );
+//        }
+
+        log.info("deliveryCreatedEvent={}", createdEvent);
 
         DeliveryPreparedEvent preparedEvent = createDeliveryPreparedEvent(
                 deliveryId,
@@ -182,6 +186,8 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
                 sortedSteps,
                 companyDeliveryManagerId
         );
+
+        log.info("deliveryPreparedEvent={}", preparedEvent);
 
         publishEventsAfterCommit(command.orderId(), deliveryId, createdEvent, preparedEvent);
 
@@ -310,8 +316,12 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
             List<HubPathResponseDto.StepDto> sortedSteps,
             UUID companyDeliveryManagerId
     ) {
-        OrderInfoDto order = orderServiceClient.getOrder(command.orderId());
+        log.info("createdDeliveryPreparedEvent 호출");
+        OrderInfoDto order = orderServiceClient.getOrder(command.orderId()).getData();
         ProductInfoDto product = productServiceClient.getProduct(order.productId());
+
+        log.info("order = {}",  order);
+        log.info("product = {}",  product);
 
         String productInfo = product.name() + " " + order.quantity() + "개";
 
@@ -321,6 +331,7 @@ public class CreateDeliveryFromOrderServiceImpl implements CreateDeliveryFromOrd
             deliveryManager = managerResponse.getData();
         }
 
+        log.info("deliveryManager = {}",  deliveryManager);
         // AI 요약용 origin은 "최종 허브" 기준
         DeliveryLocationPayload originPayload = new DeliveryLocationPayload(
                 destinationHub.hubName(),

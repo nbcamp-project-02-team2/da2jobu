@@ -48,6 +48,7 @@ public enum ErrorCode {
     HUB_SERVICE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "HUB_SERVICE_ERROR", "허브 서비스 호출 중 오류가 발생했습니다."),
     USER_SERVICE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "USER_SERVICE_ERROR", "유저 서비스 호출 중 오류가 발생했습니다."),
     ORDER_SERVICE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "ORDER_SERVICE_ERROR", "주문 서비스 호출 중 오류가 발생했습니다."),
+    INVALID_ADDRESS(HttpStatus.BAD_REQUEST, "COMPANY_ADDRESS_INVALID", "업체 주소가 올바르지 않습니다."),
 
     // ── Product ───────────────────────────────────────
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT_NOT_FOUND", "존재하지 않는 상품입니다."),
