@@ -150,6 +150,8 @@ AI 기반 배송 이력 조회 기능을 제공합니다. Spring AI + OpenAI, pg
 - 상품 생성 / 수정 / 삭제 (Soft Delete)
 - 상품 단건 조회, 목록/검색 (QueryDSL)
 - 상품 가격 이력 조회
+- 상품 재고 관리
+- 주문 시 동시성 제어
 - 내부 서비스용 상품 조회 API
 
 ### 주문
@@ -367,6 +369,9 @@ docker compose up --build
 | GET | `/api/products/{productId}` | 상품 단건 조회 | 인증된 사용자 |
 | GET | `/api/products` | 상품 목록/검색 | 인증된 사용자 |
 | GET | `/api/products/{productId}/price-histories` | 상품 가격 이력 조회 | 인증된 사용자 |
+| PATCH | /api/internal/products/{productId}/stock | 재고 차감 | 내부 전용 |
+| PATCH | /api/internal/products/{productId}/stock/restore | 재고 복구 | 내부 전용 |
+
 
 ### 주문 (order-service :8092)
 
@@ -387,6 +392,7 @@ docker compose up --build
 | GET | `/api/deliveries` | 배송 목록 조회 | MASTER, HUB_MANAGER, DELIVERY_MANAGER, COMPANY_MANAGER |
 | PUT | `/api/deliveries/{deliveryId}/status` | 배송 상태 변경 | MASTER, HUB_MANAGER, DELIVERY_MANAGER |
 | DELETE | `/api/deliveries/{deliveryId}` | 배송 삭제 | MASTER, HUB_MANAGER |
+| GET | `/api/orders/internal/active-count` | 진행 중인 주문 건수 조회 | 내부 전용 |
 
 ### 배송 담당자 (delivery-service :8094)
 
@@ -427,23 +433,56 @@ docker compose up --build
 
 ## 10. 이벤트 흐름
 
-### 주문 수락 → 배송 생성
+### 주문 생성 → 재고 차감 → 배송 생성 → 배송 ID 역전파
 
 ```
-[order-service]
-  주문 수락
+[order-service] OrderService.createOrder()
+  주문 저장 (p_order, status=PENDING → ACCEPTED)
     │
-    │ Kafka: order.accepted.v1
+    │  DB 커밋 완료 후 (afterCommit)
+    │
+    ├──── Feign: PATCH /api/internal/products/{productId}/stock?quantity={n}
+    │       └── [product-service] ProductInternalController.reduceStock()
+    │             └── productService.reduceStock()
+    │                   └── findByIdWithLock() (@Lock PESSIMISTIC_WRITE)
+    │                         └── product.reduceStock(quantity) → stockQuantity -= n
+    │
+    │  Kafka: order.accepted.v1
+    │  (OrderAcceptedEvent: orderId, supplierId, receiverId, productId,
+    │                        quantity, desiredDeliveryAt, hubId)
     ▼
-[delivery-service]
-  OrderAcceptedEventListener
-    │
-    ├── company-service (Feign) → 공급업체/수령업체 허브 ID 조회
-    ├── hub-service (Feign)     → 허브 정보 조회
-    ├── hubpath-service (Feign) → 허브 간 경로 조회
-    └── 배송 + 배송 경로 기록 생성
+[delivery-service] OrderAcceptedEventListener
+  CreateDeliveryFromOrderServiceImpl.execute()
+    ├── Feign: company-service → 공급업체 허브 ID 조회
+    ├── Feign: company-service → 수령업체 허브 ID 조회
+    └── 배송(p_delivery) + 배송 경로(p_delivery_route_record) 생성
           │
-          │ Kafka: DeliveryCreatedEvent
+          │  DB 커밋 완료 후 (afterCommit)
+          │  Kafka: delivery.created.v1
+          │  (DeliveryCreatedEvent: deliveryId, orderId)
           ▼
-      [order-service] 주문 상태 업데이트
+      [order-service] DeliveryCreatedEventListener
+        order.assignDelivery(deliveryId)
+          └── p_order.delivery_id 업데이트
+
+```
+### 주문 취소 → 재고 복구
+```
+[order-service] OrderService.cancelOrder()
+  order.cancel() → 상태 검증
+    (PENDING or ACCEPTED 일 때만 허용, 그 외 → ORDER_INVALID_STATUS_TRANSITION)
+  p_order.status = CANCELLED → DB 저장
+    │
+    │  DB 커밋 완료 후 (afterCommit)
+    │  Kafka: order.cancelled.v1
+    │  (OrderCancelledEvent: orderId, productId, quantity)
+    ▼
+[product-service] OrderCancelledEventListener
+  Redis setIfAbsent("order-cancelled:processed:{orderId}", TTL 7일)
+    ├── false (이미 처리됨) → 중복 수신 스킵, return
+    └── true (최초 수신)
+          └── productService.restoreStock(productId, quantity)
+                └── findByIdWithLock() (@Lock PESSIMISTIC_WRITE)
+                      └── product.restoreStock(quantity) → stockQuantity += n
+                            (실패 시 Redis key 삭제 → 재처리 허용)
 ```
