@@ -20,6 +20,10 @@ Spring Boot 기반 멀티모듈 구조 위에 Eureka, Gateway, Kafka, Redis, Pos
 
 ---
 
+## 0. System Architecture
+
+<p align="center"><img src="assets/systemArchitecture.png"></p>
+
 ## 1. 프로젝트 개요
 
 주문 생성 이후 상품·업체·허브·배송 서비스가 서로 연동되는 흐름을 중심으로 설계된 **물류/배송 플랫폼 백엔드**입니다.
