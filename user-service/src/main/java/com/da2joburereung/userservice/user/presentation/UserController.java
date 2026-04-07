@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @Slf4j
-@Tag(name = "User", description = "사용자 조회/승인/삭제 API")
+@Tag(name = "User", description = "사용자 조회/승인/삭제/수정 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
